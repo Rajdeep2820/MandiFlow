@@ -22,6 +22,12 @@ def run_smart_geocoder():
     # Drop rows that don't have coordinates
     pincode_df = pincode_df.dropna(subset=['latitude', 'longitude'])
     
+    # Filter pincodes falling outside India to prevent corrupted district centroids
+    pincode_df = pincode_df[
+        (pincode_df['latitude'] >= 6.0) & (pincode_df['latitude'] <= 38.0) &
+        (pincode_df['longitude'] >= 68.0) & (pincode_df['longitude'] <= 98.0)
+    ]
+    
     # Standardize district names
     pincode_df['district'] = pincode_df['district'].astype(str).str.upper().str.strip()
     
