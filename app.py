@@ -5,7 +5,7 @@ from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
 from live_engine import fetch_agmarknet_data
 
-# --- 1. DATA LOADING FUNCTIONS ---
+# --- 1. DATA LOADING FUNCTIONS -----
 
 @st.cache_data
 def load_map_data():
