@@ -29,24 +29,92 @@ def load_map_data():
         st.error(f"Error loading map coordinates: {e}")
         return pd.DataFrame()
 
-def get_final_data(comm):
+def render_main_loading_skeleton(slot):
+    slot.markdown(
+        """
+        <div class="mf-load-wrap">
+            <div class="mf-skeleton mf-load-title" style="width: 46%;"></div>
+            <div class="mf-skeleton mf-load-subtitle" style="width: 34%;"></div>
+            <div class="mf-skeleton mf-load-metric" style="width: 220px;"></div>
+            <div class="mf-skeleton mf-load-map"></div>
+            <div class="mf-skeleton mf-load-subtitle" style="width: 22%; margin-top: 20px;"></div>
+            <div class="mf-load-filters">
+                <div class="mf-skeleton mf-load-filter"></div>
+                <div class="mf-skeleton mf-load-filter"></div>
+                <div class="mf-skeleton mf-load-filter"></div>
+                <div class="mf-skeleton mf-load-filter-btn"></div>
+            </div>
+            <div class="mf-load-table">
+                <div class="mf-load-table-head">
+                    <div class="mf-skeleton th"></div><div class="mf-skeleton th"></div><div class="mf-skeleton th"></div><div class="mf-skeleton th"></div><div class="mf-skeleton th"></div>
+                    <div class="mf-skeleton th"></div><div class="mf-skeleton th"></div><div class="mf-skeleton th"></div><div class="mf-skeleton th"></div><div class="mf-skeleton th"></div>
+                </div>
+                <div class="mf-load-table-row">
+                    <div class="mf-skeleton td w1"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w3"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w4"></div>
+                    <div class="mf-skeleton td w3"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w3"></div>
+                </div>
+                <div class="mf-load-table-row">
+                    <div class="mf-skeleton td w2"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w4"></div><div class="mf-skeleton td w3"></div><div class="mf-skeleton td w2"></div>
+                    <div class="mf-skeleton td w4"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w3"></div><div class="mf-skeleton td w2"></div>
+                </div>
+                <div class="mf-load-table-row">
+                    <div class="mf-skeleton td w3"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w4"></div><div class="mf-skeleton td w3"></div>
+                    <div class="mf-skeleton td w2"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w3"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w4"></div>
+                </div>
+                <div class="mf-load-table-row">
+                    <div class="mf-skeleton td w2"></div><div class="mf-skeleton td w3"></div><div class="mf-skeleton td w3"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w4"></div>
+                    <div class="mf-skeleton td w3"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w4"></div><div class="mf-skeleton td w2"></div>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_sidebar_loading_skeleton(slot):
+    slot.markdown(
+        """
+        <div class="mf-side-load-wrap">
+            <div class="mf-skeleton mf-side-title"></div>
+            <div class="mf-skeleton mf-side-control"></div>
+            <div class="mf-skeleton mf-side-status"></div>
+            <div class="mf-skeleton mf-side-btn"></div>
+            <div class="mf-skeleton mf-side-subtitle"></div>
+            <div class="mf-skeleton mf-side-textarea"></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def get_final_data(comm, main_loading_slot=None, sidebar_loading_slot=None):
     """Handles session state to prevent infinite refresh loops and API flickering."""
     if 'mandi_data' not in st.session_state or st.session_state.get('last_comm') != comm:
-        with st.spinner(f"Establishing Link for {comm}..."):
-            data, is_live = fetch_agmarknet_data(comm)
-            
-            if not data.empty:
-                # Standardize API keys to UPPERCASE
-                data['market_key'] = data['market'].astype(str).str.upper().str.strip()
-                st.session_state.mandi_data = data
-                st.session_state.is_live = is_live
-                st.session_state.last_comm = comm
-                st.session_state.last_update = data['arrival_date'].iloc[0] if 'arrival_date' in data.columns else "N/A"
-            else:
-                st.session_state.mandi_data = pd.DataFrame()
-                st.session_state.is_live = False
-                st.session_state.last_comm = comm
-                st.session_state.last_update = "N/A"
+        if main_loading_slot is not None:
+            render_main_loading_skeleton(main_loading_slot)
+        if sidebar_loading_slot is not None:
+            render_sidebar_loading_skeleton(sidebar_loading_slot)
+
+        data, is_live = fetch_agmarknet_data(comm)
+
+        if main_loading_slot is not None:
+            main_loading_slot.empty()
+        if sidebar_loading_slot is not None:
+            sidebar_loading_slot.empty()
+        
+        if not data.empty:
+            # Standardize API keys to UPPERCASE
+            data['market_key'] = data['market'].astype(str).str.upper().str.strip()
+            st.session_state.mandi_data = data
+            st.session_state.is_live = is_live
+            st.session_state.last_comm = comm
+            st.session_state.last_update = data['arrival_date'].iloc[0] if 'arrival_date' in data.columns else "N/A"
+        else:
+            st.session_state.mandi_data = pd.DataFrame()
+            st.session_state.is_live = False
+            st.session_state.last_comm = comm
+            st.session_state.last_update = "N/A"
 
     return st.session_state.mandi_data, st.session_state.is_live
 
@@ -81,10 +149,88 @@ st.markdown("""
         display: inline-block; width: 12px; height: 12px; border-radius: 50%;
         animation: pulse 2s infinite; margin-right: 8px;
     }
+    @keyframes skeleton-shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+    .mf-skeleton {
+        background: linear-gradient(90deg, #1f2432 25%, #2a3142 37%, #1f2432 63%);
+        background-size: 400% 100%;
+        animation: skeleton-shimmer 2.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        border-radius: 8px;
+    }
+    .mf-skeleton-map {
+        height: 420px;
+        border: 1px solid #2e3446;
+        border-radius: 12px;
+        margin-top: 10px;
+    }
+    .mf-skeleton-row {
+        height: 18px;
+        margin: 10px 0;
+    }
+    .mf-load-wrap { margin-top: 6px; }
+    .mf-load-title { height: 30px; margin-bottom: 10px; }
+    .mf-load-subtitle { height: 18px; margin-bottom: 10px; }
+    .mf-load-metric { height: 62px; margin-bottom: 14px; border-radius: 12px; }
+    .mf-load-map {
+        height: 680px;
+        border-radius: 12px;
+        border: 1px solid #2e3446;
+        margin-bottom: 18px;
+        background-color: #182133;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    }
+    .mf-load-filters { display: grid; grid-template-columns: 1fr 1fr 1fr 160px; gap: 10px; margin: 12px 0 10px 0; }
+    .mf-load-filter { height: 42px; border-radius: 10px; }
+    .mf-load-filter-btn { height: 42px; border-radius: 10px; }
+    .mf-load-table { margin-top: 8px; border: 1px solid #2e3446; border-radius: 10px; padding: 10px; background: rgba(17, 22, 33, 0.7); }
+    .mf-load-table-head, .mf-load-table-row { display: grid; grid-template-columns: repeat(10, minmax(72px, 1fr)); gap: 8px; }
+    .mf-load-table-head { margin-bottom: 8px; }
+    .mf-load-table-row { margin-bottom: 8px; }
+    .mf-load-table-row:last-child { margin-bottom: 0; }
+    .mf-load-table .th { height: 14px; border-radius: 6px; opacity: 0.92; }
+    .mf-load-table .td { height: 12px; border-radius: 6px; opacity: 0.78; }
+    .mf-load-table .w1 { width: 95%; } .mf-load-table .w2 { width: 78%; } .mf-load-table .w3 { width: 64%; } .mf-load-table .w4 { width: 88%; }
+    .mf-side-load-wrap { margin: 8px 0 4px 0; }
+    .mf-side-title { height: 72px; margin-bottom: 14px; border-radius: 12px; }
+    .mf-side-control { height: 46px; margin-bottom: 12px; border-radius: 10px; }
+    .mf-side-status { height: 120px; margin-bottom: 12px; border-radius: 12px; }
+    .mf-side-btn { height: 40px; margin-bottom: 14px; border-radius: 10px; }
+    .mf-side-subtitle { height: 16px; width: 58%; margin-bottom: 10px; border-radius: 8px; }
+    .mf-side-textarea { height: 100px; border-radius: 10px; }
+    @media (max-width: 900px) {
+        .mf-load-filters { grid-template-columns: 1fr 1fr; }
+    }
     </style>
     """, unsafe_allow_html=True)
 
+def render_loading_skeleton():
+    """Display loading placeholders while live mandi data is unavailable."""
+    st.markdown(
+        """
+        <div class="mf-skeleton mf-load-map" style="height: 420px;"></div>
+        <div class="mf-load-table" style="margin-top: 10px;">
+            <div class="mf-load-table-head">
+                <div class="mf-skeleton th"></div><div class="mf-skeleton th"></div><div class="mf-skeleton th"></div><div class="mf-skeleton th"></div><div class="mf-skeleton th"></div>
+                <div class="mf-skeleton th"></div><div class="mf-skeleton th"></div><div class="mf-skeleton th"></div><div class="mf-skeleton th"></div><div class="mf-skeleton th"></div>
+            </div>
+            <div class="mf-load-table-row">
+                <div class="mf-skeleton td w1"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w3"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w4"></div>
+                <div class="mf-skeleton td w3"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w3"></div>
+            </div>
+            <div class="mf-load-table-row">
+                <div class="mf-skeleton td w2"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w4"></div><div class="mf-skeleton td w3"></div><div class="mf-skeleton td w2"></div>
+                <div class="mf-skeleton td w4"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w3"></div><div class="mf-skeleton td w2"></div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
 # --- 3. SIDEBAR CONTROLS ---
+main_loading_slot = st.empty()
+
 with st.sidebar:
     st.markdown("""
         <div style='text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);'>
@@ -97,9 +243,14 @@ with st.sidebar:
     
     # 3.1 Main Commodity Selector
     commodity = st.selectbox("Market Asset", ["Onion", "Potato", "Tomato", "Garlic", "Wheat"])
+    sidebar_loading_slot = st.empty()
 
     # Trigger stable data fetch
-    live_df, is_live = get_final_data(commodity)
+    live_df, is_live = get_final_data(
+        commodity,
+        main_loading_slot=main_loading_slot,
+        sidebar_loading_slot=sidebar_loading_slot
+    )
 
     # 3.2 Network Status Widget
     st.markdown("<br>", unsafe_allow_html=True)
@@ -146,6 +297,7 @@ if not live_df.empty:
     st.metric("National Avg", f"₹{pd.to_numeric(live_df['modal_price']).mean():.2f}")
 else:
     st.info("Waiting for data stream...")
+    render_loading_skeleton()
 
 m = folium.Map(location=[22.9734, 78.6569], zoom_start=5, tiles="CartoDB dark_matter")
 marker_cluster = MarkerCluster(options={'disableClusteringAtZoom': 7}).add_to(m)
@@ -266,6 +418,33 @@ if not live_df.empty:
         st.info("No mandi data matches your specific search criteria.")
 else:
     st.info("Waiting for data feed to populate the table...")
+    st.markdown(
+        """
+        <div class="mf-load-table" style="margin-top: 10px;">
+            <div class="mf-load-table-head">
+                <div class="mf-skeleton th"></div><div class="mf-skeleton th"></div><div class="mf-skeleton th"></div><div class="mf-skeleton th"></div><div class="mf-skeleton th"></div>
+                <div class="mf-skeleton th"></div><div class="mf-skeleton th"></div><div class="mf-skeleton th"></div><div class="mf-skeleton th"></div><div class="mf-skeleton th"></div>
+            </div>
+            <div class="mf-load-table-row">
+                <div class="mf-skeleton td w1"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w3"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w4"></div>
+                <div class="mf-skeleton td w3"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w3"></div>
+            </div>
+            <div class="mf-load-table-row">
+                <div class="mf-skeleton td w2"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w4"></div><div class="mf-skeleton td w3"></div><div class="mf-skeleton td w2"></div>
+                <div class="mf-skeleton td w4"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w3"></div><div class="mf-skeleton td w2"></div>
+            </div>
+            <div class="mf-load-table-row">
+                <div class="mf-skeleton td w3"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w4"></div><div class="mf-skeleton td w3"></div>
+                <div class="mf-skeleton td w2"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w3"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w4"></div>
+            </div>
+            <div class="mf-load-table-row">
+                <div class="mf-skeleton td w2"></div><div class="mf-skeleton td w3"></div><div class="mf-skeleton td w3"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w4"></div>
+                <div class="mf-skeleton td w3"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w2"></div><div class="mf-skeleton td w4"></div><div class="mf-skeleton td w2"></div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 st.markdown("---")
 st.caption(f"System status: Operational | Latest Update: {st.session_state.get('last_update', 'N/A')}")
