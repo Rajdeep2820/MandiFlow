@@ -7,6 +7,11 @@ from live_engine import fetch_agmarknet_data
 
 # --- 1. DATA LOADING FUNCTIONS -----
 
+@st.cache_data(ttl=300, show_spinner=False)
+def fetch_live_data_cached(comm):
+    """Cache live fetch briefly to keep UI responsive across reruns."""
+    return fetch_agmarknet_data(comm)
+
 @st.cache_data
 def load_map_data():
     """Loads the static coordinate data and prepares keys for matching."""
@@ -96,7 +101,7 @@ def get_final_data(comm, main_loading_slot=None, sidebar_loading_slot=None):
         if sidebar_loading_slot is not None:
             render_sidebar_loading_skeleton(sidebar_loading_slot)
 
-        data, is_live = fetch_agmarknet_data(comm)
+        data, is_live = fetch_live_data_cached(comm)
 
         if main_loading_slot is not None:
             main_loading_slot.empty()
@@ -229,7 +234,9 @@ def render_loading_skeleton():
     )
 
 # --- 3. SIDEBAR CONTROLS ---
-main_loading_slot = st.empty()
+main_loading_slot = None
+sidebar_loading_slot = None
+sidebar_status_slot = None
 
 with st.sidebar:
     st.markdown("""
@@ -245,32 +252,21 @@ with st.sidebar:
     commodity = st.selectbox("Market Asset", ["Onion", "Potato", "Tomato", "Garlic", "Wheat"])
     sidebar_loading_slot = st.empty()
 
-    # Trigger stable data fetch
-    live_df, is_live = get_final_data(
-        commodity,
-        main_loading_slot=main_loading_slot,
-        sidebar_loading_slot=sidebar_loading_slot
-    )
-
     # 3.2 Network Status Widget
     st.markdown("<br>", unsafe_allow_html=True)
-    status_color = "#2ecc71" if is_live and not live_df.empty else "#f1c40f"
-    status_text = "API LIVE FEED" if is_live and not live_df.empty else "FALLBACK MODE"
-    
-    st.markdown(f"""
-        <div style="padding: 15px; border-radius: 10px; border: 1px solid {status_color}; background: rgba(0,0,0,0.2); margin-bottom: 15px;">
-            <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                <div class="pulse-dot" style="background-color: {status_color}; box-shadow: 0 0 8px {status_color};"></div>
-                <strong style="color: {status_color}; font-size: 1.05rem; letter-spacing: 0.5px;">{status_text}</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #bbb; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1);">
-                <span>Active Nodes:</span>
-                <span style="color: white; font-weight: bold;">{len(live_df)} synced</span>
-            </div>
+    sidebar_status_slot = st.empty()
+    sidebar_status_slot.markdown(
+        """
+        <div style="padding: 15px; border-radius: 10px; border: 1px solid #3e4250; background: rgba(0,0,0,0.2); margin-bottom: 15px;">
+            <div class="mf-skeleton" style="height: 20px; width: 62%; margin-bottom: 12px;"></div>
+            <div class="mf-skeleton" style="height: 14px; width: 100%;"></div>
         </div>
-    """, unsafe_allow_html=True)
+        """,
+        unsafe_allow_html=True,
+    )
     
     if st.button("🔄 Sync Network", use_container_width=True, type="secondary"):
+        fetch_live_data_cached.clear()
         st.session_state.clear()
         st.rerun()
 
@@ -293,6 +289,30 @@ st.title("🌾 MandiFlow: Spatio-Temporal AI Dashboard")
 coords_df = load_map_data()
 
 st.subheader(f"📍 {commodity} Network Analysis")
+main_loading_slot = st.empty()
+# Fetch after static UI has rendered so headers/labels appear instantly
+live_df, is_live = get_final_data(
+    commodity,
+    main_loading_slot=main_loading_slot,
+    sidebar_loading_slot=sidebar_loading_slot
+)
+
+status_color = "#2ecc71" if is_live and not live_df.empty else "#f1c40f"
+status_text = "API LIVE FEED" if is_live and not live_df.empty else "FALLBACK MODE"
+if sidebar_status_slot is not None:
+    sidebar_status_slot.markdown(f"""
+        <div style="padding: 15px; border-radius: 10px; border: 1px solid {status_color}; background: rgba(0,0,0,0.2); margin-bottom: 15px;">
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <div class="pulse-dot" style="background-color: {status_color}; box-shadow: 0 0 8px {status_color};"></div>
+                <strong style="color: {status_color}; font-size: 1.05rem; letter-spacing: 0.5px;">{status_text}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #bbb; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <span>Active Nodes:</span>
+                <span style="color: white; font-weight: bold;">{len(live_df)} synced</span>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
 if not live_df.empty:
     st.metric("National Avg", f"₹{pd.to_numeric(live_df['modal_price']).mean():.2f}")
 else:
