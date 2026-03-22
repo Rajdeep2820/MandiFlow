@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 from model import MandiFlowNet
 
-# 1. Load the Graph Map (Adjacency Matrix)
+# 1. Load the Graph Map (Adjacency Matrix) nothing just trying
 print("🕸️ Loading Graph Structure...")
 adj = sparse.load_npz("mandi_adjacency.npz")
 row, col = adj.nonzero()
