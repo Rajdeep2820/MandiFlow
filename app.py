@@ -57,6 +57,21 @@ st.markdown("""
     <style>
     .main { background-color: #0e1117; color: white; }
     .stMetric { background-color: #1e2130; padding: 15px; border-radius: 10px; border: 1px solid #3e4250; }
+    
+    [data-testid="stSidebarHeader"] {
+        height: 1.5rem !important;
+        padding-top: 1.5rem !important;
+        padding-bottom: 0 !important;
+    }
+    [data-testid="stSidebarUserContent"] {
+        padding-top: 0rem !important;
+    }
+    
+    /* Main Content Top Overrides */
+    .block-container {
+        padding-top: 2rem !important;
+    }
+    
     @keyframes pulse {
         0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
         70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(46, 204, 113, 0); }
@@ -70,29 +85,57 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # --- 3. SIDEBAR CONTROLS ---
-st.sidebar.header("🕹️ MandiFlow Controls")
-commodity = st.sidebar.selectbox("Select Commodity", ["Onion", "Potato", "Tomato", "Garlic", "Wheat"])
+with st.sidebar:
+    st.markdown("""
+        <div style='text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);'>
+            <h1 style='margin-bottom: 5px; color: #2ecc71;'>🌾 MandiFlow</h1>
+            <span style='color: #888; font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase;'>Network Intelligence</span>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    st.header("🕹️ Controls")
+    
+    # 3.1 Main Commodity Selector
+    commodity = st.selectbox("Market Asset", ["Onion", "Potato", "Tomato", "Garlic", "Wheat"])
 
-# Trigger stable data fetch
-live_df, is_live = get_final_data(commodity)
+    # Trigger stable data fetch
+    live_df, is_live = get_final_data(commodity)
 
-# API Status Indicator
-status_color = "#2ecc71" if is_live and not live_df.empty else "#f1c40f"
-status_text = "API CONNECTED" if is_live and not live_df.empty else "FALLBACK MODE"
+    # 3.2 Network Status Widget
+    st.markdown("<br>", unsafe_allow_html=True)
+    status_color = "#2ecc71" if is_live and not live_df.empty else "#f1c40f"
+    status_text = "API LIVE FEED" if is_live and not live_df.empty else "FALLBACK MODE"
+    
+    st.markdown(f"""
+        <div style="padding: 15px; border-radius: 10px; border: 1px solid {status_color}; background: rgba(0,0,0,0.2); margin-bottom: 15px;">
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <div class="pulse-dot" style="background-color: {status_color}; box-shadow: 0 0 8px {status_color};"></div>
+                <strong style="color: {status_color}; font-size: 1.05rem; letter-spacing: 0.5px;">{status_text}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #bbb; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <span>Active Nodes:</span>
+                <span style="color: white; font-weight: bold;">{len(live_df)} synced</span>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    if st.button("🔄 Sync Network", use_container_width=True, type="secondary"):
+        st.session_state.clear()
+        st.rerun()
 
-st.sidebar.markdown(f"""
-    <div style="padding: 15px; border-radius: 10px; border: 1px solid {status_color}; background: rgba(0,0,0,0.2);">
-        <div class="pulse-dot" style="background-color: {status_color}; box-shadow: 0 0 8px {status_color};"></div>
-        <b style="color: {status_color};">{status_text}</b>
-        <p style="font-size: 0.7rem; color: #888; margin-top: 5px;">Records Synced: {len(live_df)}</p>
-    </div>
-""", unsafe_allow_html=True)
+    st.markdown("---")
 
-if st.sidebar.button("🔄 Sync System"):
-    st.session_state.clear()
-    st.rerun()
-
-news_headline = st.sidebar.text_area("News/Shock Trigger", "Normal market conditions")
+    # 3.3 Simulation & Shock Controls
+    st.header("⚡ Simulation Rules")
+    st.caption("Input real-world events or news specifically targeting districts (e.g. 'Floods in Nashik') to simulate structural shock in the GCN.")
+    news_headline = st.text_area("News / Shock Trigger", "Normal market conditions", height=100)
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("""
+        <div style='text-align: center; color: #666; font-size: 0.75rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;'>
+            MandiFlow v1.0<br>Spatio-Temporal GCN Engine
+        </div>
+    """, unsafe_allow_html=True)
 
 # --- 4. MAIN LAYOUT ---
 st.title("🌾 MandiFlow: Spatio-Temporal AI Dashboard")
@@ -142,7 +185,7 @@ if not coords_df.empty:
         ).add_to(marker_cluster)
 
 # CRITICAL: returned_objects=[] prevents the map from causing reruns on zoom/move
-st_folium(m, width="100%", height=750, returned_objects=[], key="mandi_map", use_container_width=True)
+st_folium(m, height=750, returned_objects=[], key="mandi_map", width="stretch")
 
 st.markdown("---")
 
@@ -162,7 +205,7 @@ market_df = live_df if sel_state == "All States" or live_df.empty else live_df[l
 market_opts = ["All Markets"] + (sorted(market_df['market'].unique().tolist()) if not market_df.empty and 'market' in market_df.columns else [])
 sel_market = col3.selectbox("Market", market_opts, label_visibility="collapsed")
 
-search_clicked = col4.button("🔍 Search", use_container_width=True, type="primary")
+search_clicked = col4.button("🔍 Search", width="stretch", type="primary")
 
 # Render Interactive Table
 if not live_df.empty:
@@ -184,9 +227,9 @@ if not live_df.empty:
         table_view['modal_price'] = table_view['modal_price'].apply(lambda x: f"Rs {x} / Quintal" if pd.notnull(x) else "N/A")
 
         # Map to columns specifically requested in the screenshot
-        table_view.columns = ['Commodity', 'Arrival Date', 'Variety', 'State', 'District', 'Market', 'Min Price', 'Max Price', 'Avg price', 'Mobile App']
+        table_view.columns = ['Commodity', 'Arrival Date', 'Variety', 'State', 'District', 'Market', 'Min Price', 'Max Price', 'Modal Price', 'Mobile App']
         
-        st.dataframe(table_view, hide_index=True, use_container_width=True)
+        st.dataframe(table_view, hide_index=True, width="stretch")
         
         # --- 6. SUMMARY SECTION ---
         st.markdown("<br>", unsafe_allow_html=True)

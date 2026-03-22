@@ -6,7 +6,7 @@ def run_smart_geocoder():
     print("📖 Loading datasets...")
     try:
         # Loading your master file
-        master_df = pd.read_parquet("mandi_master_data.parquet", columns=['Market_ID', 'District', 'Market'])
+        master_df = pd.read_parquet("mandi_master_data.parquet", columns=['Market_ID', 'State', 'District', 'Market'])
     except Exception as e:
         print(f"❌ Error: Could not find master parquet. ({e})")
         return
@@ -15,7 +15,6 @@ def run_smart_geocoder():
     pincode_df = pd.read_csv("indian_pincodes.csv")
 
     # 1. MATH FIX: Convert Latitude/Longitude to numeric (Float)
-    # 'errors=coerce' turns any non-numeric text (like "NA") into NaN
     pincode_df['latitude'] = pd.to_numeric(pincode_df['latitude'], errors='coerce')
     pincode_df['longitude'] = pd.to_numeric(pincode_df['longitude'], errors='coerce')
     
@@ -28,26 +27,34 @@ def run_smart_geocoder():
         (pincode_df['longitude'] >= 68.0) & (pincode_df['longitude'] <= 98.0)
     ]
     
-    # Standardize district names
+    # Standardize district and state names
     pincode_df['district'] = pincode_df['district'].astype(str).str.upper().str.strip()
+    pincode_df['statename'] = pincode_df['statename'].astype(str).str.upper().str.strip()
     
-    # 2. MATH: Group by District to find the average (Centroid)
-    # Now that they are numeric, the mean() function will work perfectly
-    district_coords = pincode_df.groupby('district').agg({
+    # 2. MATH: Group by State and District to find the average (Centroid)
+    district_coords = pincode_df.groupby(['statename', 'district']).agg({
         'latitude': 'mean',
         'longitude': 'mean'
     }).reset_index()
 
-    pincode_districts = district_coords['district'].tolist()
+    pincode_states = district_coords['statename'].unique().tolist()
+    state_to_districts = {
+        state: district_coords[district_coords['statename'] == state]['district'].tolist()
+        for state in pincode_states
+    }
 
     # 3. Process Mandi Districts
     mandi_mapping = master_df.drop_duplicates(subset=['Market_ID']).copy()
     mandi_mapping['District_Clean'] = mandi_mapping['District'].astype(str).str.upper().str.strip()
+    mandi_mapping['State_Clean'] = mandi_mapping['State'].astype(str).str.upper().str.strip()
 
-    # 4. SMART FUZZY MATCHING LOGIC
-    def find_best_match(name):
+    # 4. HIERARCHICAL STATE-AWARE FUZZY MATCHING LOGIC
+    def find_best_match(row):
+        name = row['District_Clean']
+        raw_state = row['State_Clean']
+        
         if not name or name == 'NAN':
-            return None
+            return pd.Series([None, None])
             
         manual_map = {
             "ALLEPPEY": "ALAPPUZHA",
@@ -55,26 +62,43 @@ def run_smart_geocoder():
             "FEROZPUR": "FIROZPUR",
             "WEST CHAMBARAN": "WEST CHAMPARAN",
             "HISSAR": "HISAR",
-            "DEEG": "BHARATPUR" # Mapping new district to parent for coordinates
+            "DEEG": "BHARATPUR",
+            "DHARASHIV": "OSMANABAD",
+            "CHHATRAPATI SAMBHAJINAGAR": "AURANGABAD"
         }
-        if name in manual_map:
-            return manual_map[name]
-
-        match = process.extractOne(name, pincode_districts, processor=utils.default_process)
+        
+        # Apply manual mappings first
+        target_district = manual_map.get(name, name)
+        
+        # 1. Fuzzy match the STATE first to guarantee perfect boundary isolation
+        state_match = process.extractOne(raw_state, pincode_states, processor=utils.default_process)
+        if not state_match or state_match[1] < 70:
+            return pd.Series([None, None]) # State failed to match entirely
+            
+        matched_state = state_match[0]
+        
+        # 2. Retrieve only the districts that legally exist inside that specific matched State
+        allowed_districts = state_to_districts.get(matched_state, [])
+        if not allowed_districts:
+            return pd.Series([None, None])
+            
+        # 3. Fuzzy match the district exclusively against its parent state's jurisdictions
+        match = process.extractOne(target_district, allowed_districts, processor=utils.default_process)
         
         if match and match[1] > 80:
-            return match[0]
-        return None
+            return pd.Series([matched_state, match[0]])
+        
+        return pd.Series([matched_state, None])
 
-    print(f"🧩 Matching {len(mandi_mapping['District_Clean'].unique())} districts using Fuzzy Logic...")
-    mandi_mapping['Matched_District'] = mandi_mapping['District_Clean'].apply(find_best_match)
+    print(f"🧩 Matching {len(mandi_mapping['District_Clean'].unique())} districts using State Hierarchy...")
+    mandi_mapping[['Matched_State', 'Matched_District']] = mandi_mapping.apply(find_best_match, axis=1)
 
-    # 5. Merge coordinates
+    # 5. Merge coordinates strictly on BOTH State and District
     final_coords = pd.merge(
         mandi_mapping, 
         district_coords, 
-        left_on='Matched_District', 
-        right_on='district', 
+        left_on=['Matched_State', 'Matched_District'], 
+        right_on=['statename', 'district'], 
         how='left'
     )
 
