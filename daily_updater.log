@@ -57,3 +57,11 @@
 2026-03-25 14:01:00,964 - INFO - ➕ Auto-mapped 5 new 'Commodity' entries into Matrix IDs!
 2026-03-25 14:01:02,340 - INFO - 🔗 Streaming 50000 new rows into Parquet (batch append)...
 2026-03-25 14:01:28,376 - INFO - 🎉 SUCCESS! Parquet updated. Appended 50000 rows. Total: 75562905
+2026-03-25 14:22:29,615 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-25 14:22:31,469 - INFO - ✅ Database is entirely up-to-date! No action needed.
+2026-03-25 14:32:52,699 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-25 14:32:54,474 - INFO - 🚀 Waking up for Catch-Up fetch! (21/03/2026 -> 25/03/2026)
+2026-03-25 14:33:07,228 - INFO - ✅ Fetched 13087  total records for 21/03/2026 (2 page(s))
+2026-03-25 14:33:23,820 - INFO - ✅ Fetched 12437  total records for 22/03/2026 (2 page(s))
+2026-03-25 14:33:51,889 - ERROR - ⚠️ Network Exception for 23/03/2026 offset=10000: ("Connection broken: ConnectionResetError(54, 'Connection reset by peer')", ConnectionResetError(54, 'Connection reset by peer'))
+2026-03-25 14:33:51,890 - ERROR - Halting catch-up fetch to prevent data gap!

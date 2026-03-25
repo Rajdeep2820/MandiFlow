@@ -19,7 +19,7 @@ logging.basicConfig(
 )
 
 API_KEY = "579b464db66ec23bdd000001709f3046112f464c4cee72c06886efa6"
-URL = "https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070"
+URL = "https://api.data.gov.in/resource/35985678-0d79-46b4-9ed6-6f13308a1d24"
 HEADERS = {'User-Agent': 'Mozilla/5.0'}
 
 master_file = "mandi_master_data.parquet"
@@ -59,7 +59,7 @@ while current_fetch_date <= target_date:
             "format": "json",
             "limit": LIMIT,
             "offset": offset,
-            "filters[arrival_date]": date_str   # new resource uses lowercase filter keys
+            "filters[Arrival_Date]": date_str   # historical resource uses Capitalized filter keys
         }
         try:
             resp = requests.get(URL, params=params, headers=HEADERS, timeout=30)
@@ -90,14 +90,7 @@ if not all_records:
 
 new_df = pd.DataFrame(all_records)
 
-# 3. Match Schema Formatting
-rename_map = {
-    'state': 'State', 'district': 'District', 'market': 'Market', 
-    'commodity': 'Commodity', 'variety': 'Variety', 'grade': 'Grade',
-    'min_price': 'Min_Price', 'max_price': 'Max_Price', 'modal_price': 'Modal_Price',
-    'arrival_date': 'Arrival_Date'
-}
-new_df = new_df.rename(columns=rename_map)
+# Historical API already yields correctly formatted capitalized columns
 
 for float_col in ['Min_Price', 'Max_Price', 'Modal_Price']:
     new_df[float_col] = pd.to_numeric(new_df[float_col], errors='coerce')
