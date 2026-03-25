@@ -8,6 +8,7 @@ import pyarrow.parquet as pq
 import os
 import json
 import secrets
+import html
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -488,8 +489,231 @@ def require_authentication():
     if st.session_state.get("auth_user"):
         return
 
-    st.title("MandiFlow Login")
-    st.caption("Sign in or create an account to access the dashboard.")
+    st.markdown(
+        """
+        <style>
+        [data-testid="stAppViewContainer"] {
+            background: linear-gradient(-45deg, #01020a, #020617, #040b1d, #07122b);
+            background-size: 400% 400%;
+            animation: gradientMove 12s ease infinite;
+            position: relative;
+            overflow: hidden;
+        }
+        [data-testid="stHeader"],
+        [data-testid="stDecoration"] {
+            background: transparent !important;
+        }
+        [data-testid="stAppViewContainer"] > .main {
+            padding-left: 4vw;
+            padding-right: 4vw;
+            box-sizing: border-box;
+        }
+        [data-testid="stAppViewContainer"] > .main .block-container {
+            width: 50% !important;
+            max-width: 860px !important;
+            min-width: 320px !important;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 16px;
+            padding: 28px 32px 34px 32px !important;
+            border-radius: 20px;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(34, 211, 238, 0.3);
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+            margin: 0 auto !important;
+        }
+        .auth-bg-blob {
+            position: fixed;
+            width: 300px;
+            height: 300px;
+            border-radius: 999px;
+            filter: blur(120px);
+            z-index: 0;
+            pointer-events: none;
+            animation: blobFloat 10s infinite alternate ease-in-out;
+        }
+        .auth-bg-blob.blob-a {
+            top: -80px;
+            left: -100px;
+            background: rgba(30, 58, 138, 0.28);
+        }
+        .auth-bg-blob.blob-b {
+            right: -80px;
+            top: 25%;
+            background: rgba(37, 99, 235, 0.18);
+            animation-duration: 12s;
+        }
+        .auth-bg-blob.blob-c {
+            bottom: -110px;
+            left: 40%;
+            background: rgba(15, 23, 42, 0.4);
+            animation-duration: 14s;
+        }
+        .auth-title {
+            margin: 0;
+            color: #ffffff;
+            font-size: 2rem;
+            letter-spacing: 0.01em;
+            text-align: center;
+        }
+        .auth-subtitle {
+            margin: 2px 0 2px 0;
+            color: #94a3b8;
+            text-align: center;
+        }
+        [data-testid="stTabs"] {
+            width: 50vw;
+            max-width: 50vw;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        div[data-baseweb="tab-list"] {
+            gap: 10px;
+            margin: 8px 0 16px 0;
+        }
+        div[data-baseweb="tab-list"] button[role="tab"] {
+            border-radius: 12px !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(71, 85, 105, 0.55) !important;
+            background: rgba(30, 41, 59, 0.92) !important;
+            transition: all 0.3s ease !important;
+            font-weight: 600 !important;
+        }
+        div[data-baseweb="tab-list"] button[role="tab"]:hover {
+            transform: scale(1.05);
+            box-shadow: none !important;
+            filter: none;
+            background: rgba(15, 23, 42, 0.82) !important;
+        }
+        div[data-baseweb="tab-list"] button[aria-selected="true"] {
+            background: rgba(30, 41, 59, 0.98) !important;
+            border: 1px solid rgba(56, 189, 248, 0.5) !important;
+            filter: none;
+            box-shadow: 0 0 8px rgba(14, 165, 233, 0.2);
+        }
+        .stTextInput > label p {
+            color: #cbd5e1 !important;
+            font-weight: 500;
+        }
+        .stTextInput div[data-baseweb="input"] {
+            border: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+        }
+        .stTextInput div[data-baseweb="input"]:focus-within {
+            border: none !important;
+            box-shadow: none !important;
+        }
+        .stTextInput input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px !important;
+            background: rgba(30, 41, 59, 0.6) !important;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(148, 163, 184, 0.2) !important;
+            color: #ffffff !important;
+            transition: all 0.3s ease !important;
+        }
+        .stTextInput input:focus {
+            outline: none !important;
+            border-color: #22d3ee !important;
+            box-shadow: 0 0 10px #22d3ee !important;
+        }
+        .stForm [data-testid="stFormSubmitButton"] button,
+        .stButton > button {
+            background: linear-gradient(90deg, #0284c7, #0891b2) !important;
+            color: #ffffff !important;
+            border-radius: 12px !important;
+            padding: 14px !important;
+            border: none !important;
+            transition: all 0.3s ease !important;
+        }
+        .stForm [data-testid="stFormSubmitButton"] button:hover,
+        .stButton > button:hover {
+            transform: translateY(-2px);
+            box-shadow: none !important;
+            background: linear-gradient(90deg, #0ea5e9, #22d3ee) !important;
+        }
+        .divider {
+            text-align: center;
+            color: #94a3b8;
+            margin: 20px 0;
+        }
+        .google-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            background: #e5ebf3;
+            color: #444444 !important;
+            border-radius: 10px;
+            padding: 12px 14px;
+            text-decoration: none !important;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .google-btn img {
+            width: 18px;
+            height: 18px;
+        }
+        .google-btn:hover {
+            background: #ffffff;
+            box-shadow: none;
+            transform: translateY(-1px);
+        }
+        .google-config-note {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            line-height: 1.45;
+        }
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes blobFloat {
+            from { transform: translate3d(0, 0, 0) scale(1); }
+            to { transform: translate3d(40px, -35px, 0) scale(1.12); }
+        }
+        @media (max-width: 900px) {
+            [data-testid="stAppViewContainer"] > .main {
+                padding-left: 0;
+                padding-right: 0;
+            }
+            [data-testid="stAppViewContainer"] > .main .block-container {
+                width: 90% !important;
+                min-width: 0 !important;
+                padding: 22px 18px 26px 18px !important;
+                border-radius: 18px;
+            }
+            [data-testid="stTabs"] {
+                width: 90%;
+                max-width: 90%;
+            }
+            .auth-title { font-size: 1.6rem; }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        """
+        <div class="auth-bg-blob blob-a"></div>
+        <div class="auth-bg-blob blob-b"></div>
+        <div class="auth-bg-blob blob-c"></div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown('<h1 class="auth-title">MandiFlow Authentication</h1>', unsafe_allow_html=True)
+    st.markdown(
+        '<p class="auth-subtitle">Sign in or create an account to access your premium dashboard.</p>',
+        unsafe_allow_html=True,
+    )
 
     if not get_firebase_api_key():
         st.error("Firebase API key is not configured.")
@@ -526,13 +750,13 @@ def require_authentication():
         google_cfg["client_id"] and google_cfg["client_secret"] and google_cfg["redirect_uri"]
     )
 
-    login_tab, signup_tab = st.tabs(["Login", "Sign Up"])
+    login_tab, signup_tab = st.tabs(["Sign In", "Create Account"])
 
     with login_tab:
         with st.form("login_form"):
             login_email = st.text_input("Email", key="login_email")
             login_password = st.text_input("Password", type="password", key="login_password")
-            login_submit = st.form_submit_button("Login", use_container_width=True)
+            login_submit = st.form_submit_button("Sign In", use_container_width=True)
 
         if login_submit:
             if not login_email or not login_password:
@@ -546,15 +770,31 @@ def require_authentication():
                     st.success("Login successful.")
                     st.rerun()
 
-        st.markdown("#### Or")
+        st.markdown('<div class="divider">Or</div>', unsafe_allow_html=True)
         if google_ready:
             google_url = get_google_auth_url()
             if google_url:
-                st.link_button("Sign in with Google", google_url, use_container_width=True)
+                escaped_url = html.escape(google_url, quote=True)
+                st.markdown(
+                    f"""
+                    <a class="google-btn" href="{escaped_url}" target="_self">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" />
+                        Continue with Google
+                    </a>
+                    """,
+                    unsafe_allow_html=True,
+                )
         else:
-            st.info(
-                "Google sign-in not configured yet. Add `google_oauth.client_id`, "
-                "`google_oauth.client_secret`, and `google_oauth.redirect_uri` in Streamlit secrets."
+            st.markdown(
+                """
+                <p class="google-config-note">
+                    Google sign-in is not configured yet. Add
+                    <code>google_oauth.client_id</code>,
+                    <code>google_oauth.client_secret</code>, and
+                    <code>google_oauth.redirect_uri</code> in Streamlit secrets.
+                </p>
+                """,
+                unsafe_allow_html=True,
             )
 
     with signup_tab:
