@@ -861,49 +861,53 @@ search_msg   = ""
 
 if map_search.strip():
     query = map_search.strip().lower()
+    mandi_found = False
 
-    # 1. Check for state match first (exact or close)
-    state_keys = list(STATE_CENTRES.keys())
-    state_match = difflib.get_close_matches(query, state_keys, n=1, cutoff=0.6)
-    if state_match:
-        lat, lon, zoom = STATE_CENTRES[state_match[0]]
-        map_center = [lat, lon]
-        map_zoom   = zoom
-        search_msg = f"📍 Zoomed to **{state_match[0].title()}**"
-    else:
-        # 2. Fuzzy-match mandi name from coords_df
-        if not coords_df.empty:
-            mandi_names = coords_df['Market'].str.lower().tolist()
-            mandi_match = difflib.get_close_matches(query, mandi_names, n=1, cutoff=0.4)
+    if not coords_df.empty:
+        # 1. Strict Substring Match (e.g. "jaipur" explicitly finds "Jaipur (F&V)")
+        mandi_names = coords_df['Market'].str.lower().tolist()
+        import re
+        exact_word_matches = [m for m in mandi_names if re.search(rf"\b{re.escape(query)}\b", m)]
+        exact_matches = [m for m in mandi_names if query in m]
+        
+        if exact_word_matches or exact_matches:
+            # Prefer word boundaries first, then favor strings that *start* with the query
+            pool = exact_word_matches if exact_word_matches else exact_matches
+            best_match = min(pool, key=lambda x: (not x.startswith(query), len(x)))
+            flagged_row = coords_df[coords_df['Market'].str.lower() == best_match].iloc[0]
+            map_center  = [flagged_row['latitude'], flagged_row['longitude']]
+            map_zoom    = 10
+            search_msg  = f"🚩 Found mandi: **{flagged_row['Market']}**, {flagged_row['District']}"
+            mandi_found = True
+        else:
+            # 2. Strict spelling-mistake fallback directly on Mandis (high similarity)
+            mandi_match = difflib.get_close_matches(query, mandi_names, n=1, cutoff=0.8)
             if mandi_match:
                 flagged_row = coords_df[coords_df['Market'].str.lower() == mandi_match[0]].iloc[0]
                 map_center  = [flagged_row['latitude'], flagged_row['longitude']]
                 map_zoom    = 10
                 search_msg  = f"🚩 Found mandi: **{flagged_row['Market']}**, {flagged_row['District']}"
-            else:
-                # --- NEAREST MANDI FALLBACK ---
-                # Mandi not in map: geocode the query and find nearest by distance
-                geo_lat, geo_lon = _geocode(map_search.strip())
-                if geo_lat is not None and not coords_df.empty:
-                    tmp = coords_df.copy()
-                    tmp['_dist_km'] = tmp.apply(
-                        lambda r: _haversine(geo_lat, geo_lon, r['latitude'], r['longitude']), axis=1
-                    )
-                    nearest = tmp.nsmallest(3, '_dist_km')
-                    # Point flag to the closest one
-                    flagged_row = nearest.iloc[0]
-                    map_center  = [flagged_row['latitude'], flagged_row['longitude']]
-                    map_zoom    = 10
-                    near_list   = ", ".join(
-                        f"{r['Market']} (~{r['_dist_km']:.0f} km)"
-                        for _, r in nearest.iterrows()
-                    )
-                    search_msg = (
-                        f"📍 **'{map_search}'** not on map. "
-                        f"Nearest mandis: {near_list}"
-                    )
-                else:
-                    search_msg = f"❌ No match found for **'{map_search}'** — try a different name."
+                mandi_found = True
+
+    if not mandi_found:
+        # 3. Geocode fallback — locate the city/town geographically, then explicitly flag the nearest Mandi
+        geo_lat, geo_lon = _geocode(map_search.strip())
+        if geo_lat is not None and not coords_df.empty:
+            tmp = coords_df.copy()
+            tmp['_dist_km'] = tmp.apply(
+                lambda r: _haversine(geo_lat, geo_lon, r['latitude'], r['longitude']), axis=1
+            )
+            nearest = tmp.nsmallest(3, '_dist_km')
+            flagged_row = nearest.iloc[0]
+            map_center  = [flagged_row['latitude'], flagged_row['longitude']]
+            map_zoom    = 10
+            near_list   = ", ".join(f"{r['Market']} (~{r['_dist_km']:.0f} km)" for _, r in nearest.iterrows())
+            search_msg = (
+                f"📍 No mandi perfectly matched **'{map_search}'**. "
+                f"**{flagged_row['Market']}** is the closest to your search! ({near_list})"
+            )
+        else:
+            search_msg = f"❌ Geographic location not found for **'{map_search}'** — try a different region."
 
 if search_msg:
     st.markdown(search_msg)
