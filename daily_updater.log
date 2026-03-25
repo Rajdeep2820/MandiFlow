@@ -65,3 +65,24 @@
 2026-03-25 14:33:23,820 - INFO - ✅ Fetched 12437  total records for 22/03/2026 (2 page(s))
 2026-03-25 14:33:51,889 - ERROR - ⚠️ Network Exception for 23/03/2026 offset=10000: ("Connection broken: ConnectionResetError(54, 'Connection reset by peer')", ConnectionResetError(54, 'Connection reset by peer'))
 2026-03-25 14:33:51,890 - ERROR - Halting catch-up fetch to prevent data gap!
+2026-03-25 14:47:20,180 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-25 14:47:22,031 - INFO - 🚀 Waking up for Catch-Up fetch! (21/03/2026 -> 25/03/2026)
+2026-03-25 14:48:05,318 - INFO - ✅ Fetched 13087  total records for 21/03/2026 (2 page(s))
+2026-03-25 14:48:16,560 - INFO - ✅ Fetched 12437  total records for 22/03/2026 (2 page(s))
+2026-03-25 14:48:33,136 - INFO - ✅ Fetched 19796  total records for 23/03/2026 (2 page(s))
+2026-03-25 14:48:40,954 - ERROR - ⚠️ Network Exception for 24/03/2026 offset=0: ("Connection broken: ConnectionResetError(54, 'Connection reset by peer')", ConnectionResetError(54, 'Connection reset by peer'))
+2026-03-25 14:48:40,955 - ERROR - Halting catch-up fetch to prevent data gap!
+2026-03-25 14:54:00,743 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-25 14:54:02,586 - INFO - 🚀 Waking up for Catch-Up fetch! (21/03/2026 -> 25/03/2026)
+2026-03-25 14:54:24,153 - INFO - ✅ Fetched 13087  total records for 21/03/2026 (2 page(s))
+2026-03-25 14:56:01,236 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-25 14:56:03,280 - INFO - 🚀 Waking up for Catch-Up fetch! (21/03/2026 -> 25/03/2026)
+2026-03-25 14:56:19,353 - INFO - ✅ Fetched 13087  total records for 21/03/2026 (2 page(s))
+2026-03-25 14:56:34,183 - INFO - ✅ Fetched 12437  total records for 22/03/2026 (2 page(s))
+2026-03-25 14:56:56,342 - INFO - ✅ Fetched 19796  total records for 23/03/2026 (2 page(s))
+2026-03-25 14:57:24,754 - INFO - ✅ Fetched 17821  total records for 24/03/2026 (2 page(s))
+2026-03-25 14:57:34,419 - INFO - ✅ Fetched 2415   total records for 25/03/2026 (1 page(s))
+2026-03-25 14:57:35,098 - INFO - 📖 Loading only ID columns for label-encoding lookup...
+2026-03-25 14:58:09,502 - INFO - ➕ Auto-mapped 17 new 'Market' entries into Matrix IDs!
+2026-03-25 14:58:12,492 - INFO - 🔗 Streaming 65556 new rows into Parquet (batch append)...
+2026-03-25 14:58:35,303 - INFO - 🎉 SUCCESS! Parquet updated. Appended 65556 rows. Total: 75578461
