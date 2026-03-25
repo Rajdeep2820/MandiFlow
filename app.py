@@ -1,6 +1,12 @@
 import streamlit as st
 import pandas as pd
 import folium
+import os
+import json
+import secrets
+import urllib.error
+import urllib.parse
+import urllib.request
 from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
 from live_engine import fetch_agmarknet_data
@@ -123,6 +129,368 @@ def get_final_data(comm, main_loading_slot=None, sidebar_loading_slot=None):
 
     return st.session_state.mandi_data, st.session_state.is_live
 
+
+def get_firebase_api_key():
+    """Read Firebase Web API key from Streamlit secrets or env variable."""
+    try:
+        if "firebase" in st.secrets and "api_key" in st.secrets["firebase"]:
+            return st.secrets["firebase"]["api_key"]
+    except Exception:
+        pass
+    return os.getenv("FIREBASE_API_KEY", "").strip()
+
+
+def get_google_oauth_config():
+    """Read Google OAuth settings from Streamlit secrets or env variables."""
+    client_id = ""
+    client_secret = ""
+    redirect_uri = ""
+    try:
+        if "google_oauth" in st.secrets:
+            cfg = st.secrets["google_oauth"]
+            client_id = str(cfg.get("client_id", "")).strip()
+            client_secret = str(cfg.get("client_secret", "")).strip()
+            redirect_uri = str(cfg.get("redirect_uri", "")).strip()
+    except Exception:
+        pass
+
+    client_id = client_id or os.getenv("GOOGLE_CLIENT_ID", "").strip()
+    client_secret = client_secret or os.getenv("GOOGLE_CLIENT_SECRET", "").strip()
+    redirect_uri = redirect_uri or os.getenv("GOOGLE_REDIRECT_URI", "").strip()
+
+    return {
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "redirect_uri": redirect_uri,
+    }
+
+
+def get_query_param(name):
+    value = st.query_params.get(name)
+    if isinstance(value, list):
+        return value[0] if value else None
+    return value
+
+
+def set_query_param(name, value):
+    if value is None:
+        st.query_params.pop(name, None)
+    else:
+        st.query_params[name] = str(value)
+
+
+def clear_auth_query_params():
+    for key in ["rt", "code", "state", "scope", "authuser", "prompt"]:
+        st.query_params.pop(key, None)
+
+
+def parse_firebase_error(error_code):
+    """Map Firebase auth error codes to user-friendly messages."""
+    message_map = {
+        "EMAIL_EXISTS": "This email is already registered. Please sign in.",
+        "OPERATION_NOT_ALLOWED": "Email/password sign-in is not enabled in Firebase.",
+        "TOO_MANY_ATTEMPTS_TRY_LATER": "Too many attempts. Please try again later.",
+        "EMAIL_NOT_FOUND": "No account found with this email.",
+        "INVALID_PASSWORD": "Incorrect password.",
+        "USER_DISABLED": "This account has been disabled by an administrator.",
+        "INVALID_EMAIL": "Please enter a valid email address.",
+        "WEAK_PASSWORD : Password should be at least 6 characters": "Password must be at least 6 characters long.",
+        "WEAK_PASSWORD": "Password must be at least 6 characters long.",
+    }
+    return message_map.get(error_code, f"Authentication failed: {error_code}")
+
+
+def firebase_auth_request(endpoint, payload):
+    """Call Firebase Identity Toolkit endpoint."""
+    api_key = get_firebase_api_key()
+    if not api_key:
+        return None, "Firebase API key is missing."
+
+    url = f"https://identitytoolkit.googleapis.com/v1/{endpoint}?key={api_key}"
+    payload_bytes = json.dumps(payload).encode("utf-8")
+    request = urllib.request.Request(
+        url,
+        data=payload_bytes,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            raw = response.read().decode("utf-8")
+            data = json.loads(raw)
+    except urllib.error.HTTPError as http_error:
+        raw_error = http_error.read().decode("utf-8")
+        try:
+            data = json.loads(raw_error)
+            error_code = data.get("error", {}).get("message", "UNKNOWN_ERROR")
+        except ValueError:
+            error_code = "UNKNOWN_ERROR"
+        return None, parse_firebase_error(error_code)
+    except urllib.error.URLError:
+        return None, "Unable to reach Firebase. Check your internet connection."
+    except ValueError:
+        return None, "Firebase returned an invalid response."
+    return data, None
+
+
+def login_with_firebase(email, password):
+    payload = {"email": email, "password": password, "returnSecureToken": True}
+    return firebase_auth_request("accounts:signInWithPassword", payload)
+
+
+def signup_with_firebase(email, password):
+    payload = {"email": email, "password": password, "returnSecureToken": True}
+    return firebase_auth_request("accounts:signUp", payload)
+
+
+def refresh_firebase_session(refresh_token):
+    api_key = get_firebase_api_key()
+    if not api_key:
+        return None, "Firebase API key is missing."
+
+    url = f"https://securetoken.googleapis.com/v1/token?key={api_key}"
+    post_data = urllib.parse.urlencode(
+        {"grant_type": "refresh_token", "refresh_token": refresh_token}
+    ).encode("utf-8")
+    request = urllib.request.Request(
+        url,
+        data=post_data,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            raw = response.read().decode("utf-8")
+            data = json.loads(raw)
+    except urllib.error.HTTPError:
+        return None, "Session expired. Please sign in again."
+    except urllib.error.URLError:
+        return None, "Unable to refresh your session right now."
+    except ValueError:
+        return None, "Invalid session response."
+
+    return data, None
+
+
+def get_google_auth_url():
+    cfg = get_google_oauth_config()
+    if not cfg["client_id"] or not cfg["redirect_uri"]:
+        return None
+
+    state = secrets.token_urlsafe(24)
+    st.session_state.google_oauth_state = state
+    params = {
+        "client_id": cfg["client_id"],
+        "redirect_uri": cfg["redirect_uri"],
+        "response_type": "code",
+        "scope": "openid email profile",
+        "access_type": "offline",
+        "prompt": "select_account",
+        "state": state,
+    }
+    return "https://accounts.google.com/o/oauth2/v2/auth?" + urllib.parse.urlencode(params)
+
+
+def exchange_google_code_for_token(code):
+    cfg = get_google_oauth_config()
+    if not cfg["client_id"] or not cfg["client_secret"] or not cfg["redirect_uri"]:
+        return None, "Google OAuth is not configured."
+
+    payload = urllib.parse.urlencode(
+        {
+            "code": code,
+            "client_id": cfg["client_id"],
+            "client_secret": cfg["client_secret"],
+            "redirect_uri": cfg["redirect_uri"],
+            "grant_type": "authorization_code",
+        }
+    ).encode("utf-8")
+    request = urllib.request.Request(
+        "https://oauth2.googleapis.com/token",
+        data=payload,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            raw = response.read().decode("utf-8")
+            data = json.loads(raw)
+    except urllib.error.HTTPError:
+        return None, "Google sign-in failed while exchanging token."
+    except urllib.error.URLError:
+        return None, "Unable to reach Google sign-in service."
+    except ValueError:
+        return None, "Invalid token response from Google."
+
+    id_token = data.get("id_token")
+    if not id_token:
+        return None, "Google did not return an ID token."
+    return id_token, None
+
+
+def login_with_google(id_token):
+    cfg = get_google_oauth_config()
+    request_uri = cfg["redirect_uri"] or "http://localhost"
+    payload = {
+        "postBody": f"id_token={id_token}&providerId=google.com",
+        "requestUri": request_uri,
+        "returnSecureToken": True,
+        "returnIdpCredential": True,
+    }
+    return firebase_auth_request("accounts:signInWithIdp", payload)
+
+
+def build_auth_user(auth_data, fallback_email=""):
+    return {
+        "email": auth_data.get("email", fallback_email),
+        "local_id": auth_data.get("localId", auth_data.get("user_id", "")),
+        "id_token": auth_data.get("idToken", auth_data.get("id_token", "")),
+        "refresh_token": auth_data.get("refreshToken", auth_data.get("refresh_token", "")),
+    }
+
+
+def save_authenticated_user(auth_data, fallback_email=""):
+    user = build_auth_user(auth_data, fallback_email=fallback_email)
+    st.session_state.auth_user = user
+    if user.get("refresh_token"):
+        set_query_param("rt", user["refresh_token"])
+    return user
+
+
+def restore_auth_session_from_query():
+    if st.session_state.get("auth_user"):
+        return True
+
+    refresh_token = get_query_param("rt")
+    if not refresh_token:
+        return False
+
+    refreshed, error = refresh_firebase_session(refresh_token)
+    if error or not refreshed:
+        clear_auth_query_params()
+        return False
+
+    lookup_data, _ = firebase_auth_request(
+        "accounts:lookup", {"idToken": refreshed.get("id_token", "")}
+    )
+    email = ""
+    if lookup_data and lookup_data.get("users"):
+        email = lookup_data["users"][0].get("email", "")
+
+    save_authenticated_user(refreshed, fallback_email=email)
+    return True
+
+
+def logout_user():
+    for key in ["auth_user", "google_oauth_state", "mandi_data", "is_live", "last_comm", "last_update"]:
+        if key in st.session_state:
+            del st.session_state[key]
+    clear_auth_query_params()
+    fetch_live_data_cached.clear()
+
+
+def require_authentication():
+    if restore_auth_session_from_query():
+        return
+
+    if st.session_state.get("auth_user"):
+        return
+
+    st.title("MandiFlow Login")
+    st.caption("Sign in or create an account to access the dashboard.")
+
+    if not get_firebase_api_key():
+        st.error("Firebase API key is not configured.")
+        st.info("Add it in `.streamlit/secrets.toml` or environment variable `FIREBASE_API_KEY`.")
+        st.code("[firebase]\napi_key = \"YOUR_FIREBASE_WEB_API_KEY\"")
+        st.stop()
+
+    auth_code = get_query_param("code")
+    oauth_state = get_query_param("state")
+    if auth_code:
+        saved_state = st.session_state.get("google_oauth_state")
+        if saved_state and oauth_state != saved_state:
+            st.error("Google sign-in state mismatch. Please try again.")
+            clear_auth_query_params()
+        else:
+            id_token, google_error = exchange_google_code_for_token(auth_code)
+            if google_error:
+                st.error(google_error)
+                clear_auth_query_params()
+            else:
+                auth_data, firebase_error = login_with_google(id_token)
+                if firebase_error:
+                    st.error(firebase_error)
+                    clear_auth_query_params()
+                else:
+                    save_authenticated_user(auth_data, fallback_email=auth_data.get("email", ""))
+                    clear_auth_query_params()
+                    set_query_param("rt", st.session_state.auth_user.get("refresh_token", ""))
+                    st.success("Signed in with Google.")
+                    st.rerun()
+
+    google_cfg = get_google_oauth_config()
+    google_ready = bool(
+        google_cfg["client_id"] and google_cfg["client_secret"] and google_cfg["redirect_uri"]
+    )
+
+    login_tab, signup_tab = st.tabs(["Login", "Sign Up"])
+
+    with login_tab:
+        with st.form("login_form"):
+            login_email = st.text_input("Email", key="login_email")
+            login_password = st.text_input("Password", type="password", key="login_password")
+            login_submit = st.form_submit_button("Login", use_container_width=True)
+
+        if login_submit:
+            if not login_email or not login_password:
+                st.warning("Please enter both email and password.")
+            else:
+                auth_data, error = login_with_firebase(login_email.strip(), login_password)
+                if error:
+                    st.error(error)
+                else:
+                    save_authenticated_user(auth_data, fallback_email=login_email.strip())
+                    st.success("Login successful.")
+                    st.rerun()
+
+        st.markdown("#### Or")
+        if google_ready:
+            google_url = get_google_auth_url()
+            if google_url:
+                st.link_button("Sign in with Google", google_url, use_container_width=True)
+        else:
+            st.info(
+                "Google sign-in not configured yet. Add `google_oauth.client_id`, "
+                "`google_oauth.client_secret`, and `google_oauth.redirect_uri` in Streamlit secrets."
+            )
+
+    with signup_tab:
+        with st.form("signup_form"):
+            signup_email = st.text_input("Email", key="signup_email")
+            signup_password = st.text_input("Password", type="password", key="signup_password")
+            signup_confirm_password = st.text_input("Confirm Password", type="password", key="signup_confirm_password")
+            signup_submit = st.form_submit_button("Create Account", use_container_width=True)
+
+        if signup_submit:
+            if not signup_email or not signup_password or not signup_confirm_password:
+                st.warning("Please fill all fields.")
+            elif signup_password != signup_confirm_password:
+                st.error("Passwords do not match.")
+            else:
+                auth_data, error = signup_with_firebase(signup_email.strip(), signup_password)
+                if error:
+                    st.error(error)
+                else:
+                    save_authenticated_user(auth_data, fallback_email=signup_email.strip())
+                    st.success("Account created successfully.")
+                    st.rerun()
+
+    st.stop()
+
 # --- 2. SETTINGS & UI STYLING ---
 st.set_page_config(page_title="MandiFlow Intelligence", layout="wide", page_icon="🌾")
 
@@ -210,6 +578,8 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
+require_authentication()
+
 def render_loading_skeleton():
     """Display loading placeholders while live mandi data is unavailable."""
     st.markdown(
@@ -239,6 +609,13 @@ sidebar_loading_slot = None
 sidebar_status_slot = None
 
 with st.sidebar:
+    auth_user = st.session_state.get("auth_user", {})
+    st.caption(f"Signed in as: {auth_user.get('email', 'unknown')}")
+    if st.button("Logout", use_container_width=True, type="secondary"):
+        logout_user()
+        st.rerun()
+    st.markdown("---")
+
     st.markdown("""
         <div style='text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);'>
             <h1 style='margin-bottom: 5px; color: #2ecc71;'>🌾 MandiFlow</h1>
@@ -267,7 +644,9 @@ with st.sidebar:
     
     if st.button("🔄 Sync Network", use_container_width=True, type="secondary"):
         fetch_live_data_cached.clear()
-        st.session_state.clear()
+        for key in ["mandi_data", "is_live", "last_comm", "last_update"]:
+            if key in st.session_state:
+                del st.session_state[key]
         st.rerun()
 
     st.markdown("---")
