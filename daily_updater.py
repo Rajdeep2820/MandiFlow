@@ -73,10 +73,12 @@ while current_fetch_date <= target_date:
                 time.sleep(0.3)  # Be polite between pages
             else:
                 logging.error(f"❌ API error for {date_str} offset={offset}. Status: {resp.status_code}")
-                break
+                logging.error("Halting catch-up fetch to prevent data gap!")
+                sys.exit(1)
         except Exception as e:
             logging.error(f"⚠️ Network Exception for {date_str} offset={offset}: {e}")
-            break
+            logging.error("Halting catch-up fetch to prevent data gap!")
+            sys.exit(1)
 
     logging.info(f"✅ Fetched {day_total:<6} total records for {date_str} ({offset//LIMIT + 1} page(s))")
     current_fetch_date += datetime.timedelta(days=1)
@@ -137,6 +139,15 @@ del id_df  # Free memory immediately
 logging.info(f"🔗 Streaming {len(new_df)} new rows into Parquet (batch append)...")
 
 existing_schema = pq.read_schema(master_file)
+
+# Safeguard: Align new_df to the mandatory parquet schema dynamically
+for col in existing_schema.names:
+    if col not in new_df.columns:
+        new_df[col] = None
+
+# Reorder specifically to match schema
+new_df = new_df[existing_schema.names]
+
 new_table = pa.Table.from_pandas(new_df, schema=existing_schema, preserve_index=False)
 
 writer = pq.ParquetWriter(master_file + ".tmp", schema=existing_schema)

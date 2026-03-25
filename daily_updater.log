@@ -22,3 +22,38 @@
 2026-03-24 23:58:30,962 - INFO - ➕ Auto-mapped 7 new 'Market' entries into Matrix IDs!
 2026-03-24 23:58:41,724 - INFO - ➕ Auto-mapped 8 new 'Commodity' entries into Matrix IDs!
 2026-03-24 23:58:44,287 - INFO - 🔗 Streaming 20000 new rows into Parquet (batch append)...
+2026-03-25 13:33:16,603 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-25 13:33:18,392 - INFO - 🚀 Waking up for Catch-Up fetch! (21/03/2026 -> 25/03/2026)
+2026-03-25 13:33:29,397 - INFO - ✅ Fetched 10000  total records for 21/03/2026 (2 page(s))
+2026-03-25 13:34:12,388 - ERROR - ⚠️ Network Exception for 22/03/2026 offset=0: HTTPSConnectionPool(host='api.data.gov.in', port=443): Read timed out.
+2026-03-25 13:34:12,390 - INFO - ✅ Fetched 0      total records for 22/03/2026 (1 page(s))
+2026-03-25 13:34:41,069 - INFO - ✅ Fetched 10000  total records for 23/03/2026 (2 page(s))
+2026-03-25 13:34:56,532 - INFO - ✅ Fetched 10000  total records for 24/03/2026 (2 page(s))
+2026-03-25 13:35:11,533 - INFO - ✅ Fetched 10000  total records for 25/03/2026 (2 page(s))
+2026-03-25 13:35:12,113 - INFO - 📖 Loading only ID columns for label-encoding lookup...
+2026-03-25 13:36:26,106 - INFO - ➕ Auto-mapped 4 new 'Market' entries into Matrix IDs!
+2026-03-25 13:36:30,669 - INFO - ➕ Auto-mapped 5 new 'Commodity' entries into Matrix IDs!
+2026-03-25 13:36:32,934 - INFO - 🔗 Streaming 40000 new rows into Parquet (batch append)...
+2026-03-25 13:39:23,920 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-25 13:39:25,744 - INFO - 🚀 Waking up for Catch-Up fetch! (21/03/2026 -> 25/03/2026)
+2026-03-25 13:39:35,982 - INFO - ✅ Fetched 10000  total records for 21/03/2026 (2 page(s))
+2026-03-25 13:39:45,294 - INFO - ✅ Fetched 10000  total records for 22/03/2026 (2 page(s))
+2026-03-25 13:39:54,754 - INFO - ✅ Fetched 10000  total records for 23/03/2026 (2 page(s))
+2026-03-25 13:40:09,139 - INFO - ✅ Fetched 10000  total records for 24/03/2026 (2 page(s))
+2026-03-25 13:40:19,250 - INFO - ✅ Fetched 10000  total records for 25/03/2026 (2 page(s))
+2026-03-25 13:40:19,866 - INFO - 📖 Loading only ID columns for label-encoding lookup...
+2026-03-25 13:41:26,589 - INFO - ➕ Auto-mapped 4 new 'Market' entries into Matrix IDs!
+2026-03-25 13:41:33,174 - INFO - ➕ Auto-mapped 5 new 'Commodity' entries into Matrix IDs!
+2026-03-25 13:41:35,543 - INFO - 🔗 Streaming 50000 new rows into Parquet (batch append)...
+2026-03-25 13:59:23,146 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-25 13:59:24,962 - INFO - 🚀 Waking up for Catch-Up fetch! (21/03/2026 -> 25/03/2026)
+2026-03-25 13:59:34,391 - INFO - ✅ Fetched 10000  total records for 21/03/2026 (2 page(s))
+2026-03-25 13:59:47,909 - INFO - ✅ Fetched 10000  total records for 22/03/2026 (2 page(s))
+2026-03-25 13:59:58,251 - INFO - ✅ Fetched 10000  total records for 23/03/2026 (2 page(s))
+2026-03-25 14:00:09,658 - INFO - ✅ Fetched 10000  total records for 24/03/2026 (2 page(s))
+2026-03-25 14:00:18,320 - INFO - ✅ Fetched 10000  total records for 25/03/2026 (2 page(s))
+2026-03-25 14:00:18,933 - INFO - 📖 Loading only ID columns for label-encoding lookup...
+2026-03-25 14:00:59,084 - INFO - ➕ Auto-mapped 4 new 'Market' entries into Matrix IDs!
+2026-03-25 14:01:00,964 - INFO - ➕ Auto-mapped 5 new 'Commodity' entries into Matrix IDs!
+2026-03-25 14:01:02,340 - INFO - 🔗 Streaming 50000 new rows into Parquet (batch append)...
+2026-03-25 14:01:28,376 - INFO - 🎉 SUCCESS! Parquet updated. Appended 50000 rows. Total: 75562905
