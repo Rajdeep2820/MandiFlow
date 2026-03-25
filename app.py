@@ -1,16 +1,96 @@
 import streamlit as st
 import pandas as pd
 import folium
+import difflib
+import math
+import requests as _req
+import pyarrow.parquet as pq
 from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
 from live_engine import fetch_agmarknet_data
-
 # --- 1. DATA LOADING FUNCTIONS -----
 
 @st.cache_data(ttl=300, show_spinner=False)
 def fetch_live_data_cached(comm):
     """Cache live fetch briefly to keep UI responsive across reruns."""
     return fetch_agmarknet_data(comm)
+
+
+def _haversine(lat1, lon1, lat2, lon2):
+    """Great-circle distance in km between two lat/lon points."""
+    R = 6371.0
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = (math.sin(dlat / 2) ** 2
+         + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2))
+         * math.sin(dlon / 2) ** 2)
+    return R * 2 * math.asin(math.sqrt(a))
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def _geocode(query: str):
+    """Geocode an Indian location via Nominatim. Returns (lat, lon) or (None, None)."""
+    try:
+        resp = _req.get(
+            "https://nominatim.openstreetmap.org/search",
+            params={"q": f"{query}, India", "format": "json", "limit": 1},
+            headers={"User-Agent": "MandiFlow/1.0"},
+            timeout=6,
+        )
+        data = resp.json()
+        if data:
+            return float(data[0]["lat"]), float(data[0]["lon"])
+    except Exception:
+        pass
+    return None, None
+
+# Columns that must be present in live_df for the dashboard to render correctly
+REQUIRED_COLS = {'market', 'district', 'state', 'commodity', 'variety',
+                 'modal_price', 'min_price', 'max_price', 'arrival_date'}
+
+# Full ranked list of all 57 commodities (by all-time trade volume, descending)
+ALL_RANKED_COMMODITIES = [
+    "Paddy (Dhan)(Common)", "Wheat", "Potato", "Onion", "Tomato", "Brinjal", "Green Chilli",
+    "Rice", "Banana", "Cauliflower", "Bhindi (Ladies Finger)", "Mustard",
+    "Cabbage", "Maize", "Bengal Gram (Gram)(Whole)", "Cucumbar (Kheera)",
+    "Bottle gourd", "Apple", "Soyabean", "Bitter gourd", "Pumpkin",
+    "Carrot", "Arhar (Tur/Red Gram)(Whole)", "Cotton", "Raddish",
+    "Black Gram (Urd Beans)(Whole)", "Ginger (Green)", "Bajra (Pearl Millet/Cumbu)",
+    "Gur (Jaggery)", "Jowar (Sorghum)", "Garlic", "Moong (Whole)", "Groundnut",
+    "Peas Wet", "Spinach", "Methi (Fenugreek)", "Lemon", "Sweet Potato",
+    "Coriander (Leaves)", "Drumstick", "Field Pea", "Capsicum",
+    "Grapes", "Mango", "Pomegranate", "Watermelon", "Orange",
+    "Guava", "Papaya", "Jackfruit", "Coconut", "Sesamum (Sesame/Til)",
+    "Sugarcane", "Turmeric", "Dry Chillies", "Coriander Seed", "Sunflower"
+]
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def get_active_prime_commodities():
+    """
+    Dynamically determines which commodities are 'active' (traded within last 7 days).
+    Returns (prime_list, others_list) where prime_list has exactly 7 entries,
+    all guaranteed to have recent data. Stale commodities are skipped and the next
+    active one in rank order fills the slot.
+    """
+    try:
+        cutoff = pd.Timestamp.today().normalize() - pd.Timedelta(days=7)
+        table = pq.read_table(
+            "mandi_master_data.parquet",
+            columns=["Commodity"],
+            filters=[("Arrival_Date", ">=", cutoff)]
+        )
+        active_set = set(table.column("Commodity").to_pylist())
+    except Exception:
+        # Parquet unavailable — fall back to full list, no filtering
+        active_set = set(ALL_RANKED_COMMODITIES)
+
+    prime  = [c for c in ALL_RANKED_COMMODITIES if c in active_set][:7]
+    # Fill up to 7 if fewer than 7 active (edge case)
+    if len(prime) < 7:
+        prime = ALL_RANKED_COMMODITIES[:7]
+    prime_set = set(prime)
+    others = [c for c in ALL_RANKED_COMMODITIES if c not in prime_set]
+    return prime, others
 
 @st.cache_data
 def load_map_data():
@@ -95,7 +175,16 @@ def render_sidebar_loading_skeleton(slot):
 
 def get_final_data(comm, main_loading_slot=None, sidebar_loading_slot=None):
     """Handles session state to prevent infinite refresh loops and API flickering."""
-    if 'mandi_data' not in st.session_state or st.session_state.get('last_comm') != comm:
+    # Invalidate cache if: commodity changed, no data yet, or required columns are missing
+    cached_data = st.session_state.get('mandi_data', pd.DataFrame())
+    has_all_cols = REQUIRED_COLS.issubset(set(cached_data.columns)) if not cached_data.empty else False
+    needs_refresh = (
+        'mandi_data' not in st.session_state
+        or st.session_state.get('last_comm') != comm
+        or not has_all_cols
+    )
+
+    if needs_refresh:
         if main_loading_slot is not None:
             render_main_loading_skeleton(main_loading_slot)
         if sidebar_loading_slot is not None:
@@ -248,8 +337,24 @@ with st.sidebar:
     
     st.header("🕹️ Controls")
     
-    # 3.1 Main Commodity Selector
-    commodity = st.selectbox("Market Asset", ["Onion", "Potato", "Tomato", "Garlic", "Wheat"])
+    # 3.1 Main Commodity Selector — dynamically filtered by recency
+    # prime = top 7 with trades in last 7 days; stale ones are automatically replaced
+    _prime, _others = get_active_prime_commodities()
+    prime_display = [f"⭐ {c}" for c in _prime]
+    all_options   = prime_display + _others
+
+    # Default to ⭐ Onion if active, otherwise first prime
+    _onion_display = "⭐ Onion"
+    default_idx = all_options.index(_onion_display) if _onion_display in all_options else 0
+
+    selected_display = st.selectbox(
+        "Market Asset",
+        options=all_options,
+        index=default_idx,
+        help="⭐ = Active prime (traded in last 7 days). Stale commodities are auto-demoted."
+    )
+    # Strip the ⭐ prefix before using the value anywhere
+    commodity = selected_display.replace("⭐ ", "").strip()
     sidebar_loading_slot = st.empty()
 
     # 3.2 Network Status Widget
@@ -288,9 +393,43 @@ with st.sidebar:
 st.title("🌾 MandiFlow: Spatio-Temporal AI Dashboard")
 coords_df = load_map_data()
 
+# --- STATE CENTRE COORDINATES for zoom-to-state search ---
+STATE_CENTRES = {
+    "andhra pradesh":     (15.9129, 79.7400, 7),
+    "arunachal pradesh":  (27.1004, 93.6166, 7),
+    "assam":              (26.2006, 92.9376, 7),
+    "bihar":              (25.0961, 85.3131, 7),
+    "chhattisgarh":       (21.2787, 81.8661, 7),
+    "goa":                (15.2993, 74.1240, 9),
+    "gujarat":            (22.2587, 71.1924, 7),
+    "haryana":            (29.0588, 76.0856, 7),
+    "himachal pradesh":   (31.1048, 77.1734, 7),
+    "jharkhand":          (23.6102, 85.2799, 7),
+    "karnataka":          (15.3173, 75.7139, 7),
+    "kerala":             (10.8505, 76.2711, 7),
+    "madhya pradesh":     (22.9734, 78.6569, 7),
+    "maharashtra":        (19.7515, 75.7139, 7),
+    "manipur":            (24.6637, 93.9063, 8),
+    "meghalaya":          (25.4670, 91.3662, 8),
+    "mizoram":            (23.1645, 92.9376, 8),
+    "nagaland":           (26.1584, 94.5624, 8),
+    "odisha":             (20.9517, 85.0985, 7),
+    "punjab":             (31.1471, 75.3412, 7),
+    "rajasthan":          (27.0238, 74.2179, 6),
+    "sikkim":             (27.5330, 88.5122, 9),
+    "tamil nadu":         (11.1271, 78.6569, 7),
+    "telangana":          (18.1124, 79.0193, 7),
+    "tripura":            (23.9408, 91.9882, 8),
+    "uttar pradesh":      (26.8467, 80.9462, 6),
+    "uttarakhand":        (30.0668, 79.0193, 7),
+    "west bengal":        (22.9868, 87.8550, 7),
+    "delhi":              (28.7041, 77.1025, 10),
+    "jammu and kashmir":  (33.7782, 76.5762, 7),
+    "ladakh":             (34.1526, 77.5770, 7),
+}
+
 st.subheader(f"📍 {commodity} Network Analysis")
 main_loading_slot = st.empty()
-# Fetch after static UI has rendered so headers/labels appear instantly
 live_df, is_live = get_final_data(
     commodity,
     main_loading_slot=main_loading_slot,
@@ -319,7 +458,78 @@ else:
     st.info("Waiting for data stream...")
     render_loading_skeleton()
 
-m = folium.Map(location=[22.9734, 78.6569], zoom_start=5, tiles="CartoDB dark_matter")
+# --- MAP SEARCH BAR ---
+# Counter-key pattern: changing the key forces Streamlit to create a new empty widget
+if "search_counter" not in st.session_state:
+    st.session_state.search_counter = 0
+
+search_col, clear_col = st.columns([5, 1])
+map_search = search_col.text_input(
+    "🔍 Search map",
+    placeholder="Type a state (e.g. Maharashtra) or mandi name (e.g. Nashik)...",
+    label_visibility="collapsed",
+    key=f"map_search_input_{st.session_state.search_counter}"
+)
+if clear_col.button("✕ Clear", use_container_width=True):
+    st.session_state.search_counter += 1
+    st.rerun()
+
+# --- RESOLVE SEARCH ---
+map_center   = [22.9734, 78.6569]  # Default: India centre
+map_zoom     = 5
+flagged_row  = None   # The mandi row to pin a red flag on
+search_msg   = ""
+
+if map_search.strip():
+    query = map_search.strip().lower()
+
+    # 1. Check for state match first (exact or close)
+    state_keys = list(STATE_CENTRES.keys())
+    state_match = difflib.get_close_matches(query, state_keys, n=1, cutoff=0.6)
+    if state_match:
+        lat, lon, zoom = STATE_CENTRES[state_match[0]]
+        map_center = [lat, lon]
+        map_zoom   = zoom
+        search_msg = f"📍 Zoomed to **{state_match[0].title()}**"
+    else:
+        # 2. Fuzzy-match mandi name from coords_df
+        if not coords_df.empty:
+            mandi_names = coords_df['Market'].str.lower().tolist()
+            mandi_match = difflib.get_close_matches(query, mandi_names, n=1, cutoff=0.4)
+            if mandi_match:
+                flagged_row = coords_df[coords_df['Market'].str.lower() == mandi_match[0]].iloc[0]
+                map_center  = [flagged_row['latitude'], flagged_row['longitude']]
+                map_zoom    = 10
+                search_msg  = f"🚩 Found mandi: **{flagged_row['Market']}**, {flagged_row['District']}"
+            else:
+                # --- NEAREST MANDI FALLBACK ---
+                # Mandi not in map: geocode the query and find nearest by distance
+                geo_lat, geo_lon = _geocode(map_search.strip())
+                if geo_lat is not None and not coords_df.empty:
+                    tmp = coords_df.copy()
+                    tmp['_dist_km'] = tmp.apply(
+                        lambda r: _haversine(geo_lat, geo_lon, r['latitude'], r['longitude']), axis=1
+                    )
+                    nearest = tmp.nsmallest(3, '_dist_km')
+                    # Point flag to the closest one
+                    flagged_row = nearest.iloc[0]
+                    map_center  = [flagged_row['latitude'], flagged_row['longitude']]
+                    map_zoom    = 10
+                    near_list   = ", ".join(
+                        f"{r['Market']} (~{r['_dist_km']:.0f} km)"
+                        for _, r in nearest.iterrows()
+                    )
+                    search_msg = (
+                        f"📍 **'{map_search}'** not on map. "
+                        f"Nearest mandis: {near_list}"
+                    )
+                else:
+                    search_msg = f"❌ No match found for **'{map_search}'** — try a different name."
+
+if search_msg:
+    st.markdown(search_msg)
+
+m = folium.Map(location=map_center, zoom_start=map_zoom, tiles="CartoDB dark_matter")
 marker_cluster = MarkerCluster(options={'disableClusteringAtZoom': 7}).add_to(m)
 
 if not coords_df.empty:
@@ -356,8 +566,64 @@ if not coords_df.empty:
             tooltip=folium.Tooltip(tooltip_html, sticky=True)
         ).add_to(marker_cluster)
 
+# --- RED FLAG MARKER for searched mandi (outside cluster so always visible) ---
+if flagged_row is not None:
+    price_val = None
+    matched_market_name = flagged_row['Market']
+    if not live_df.empty:
+        flag_key = str(flagged_row['Market']).upper().strip()
+        # Stage 1: Exact market_key match
+        price_val = price_map.get(flag_key)
+        # Stage 2: Partial match — e.g. 'SANWER' matches 'SANWER APMC'
+        if price_val is None:
+            for k, v in price_map.items():
+                if flag_key in k or k in flag_key:
+                    price_val = v
+                    matched_market_name = k.title()
+                    break
+        # Stage 3: District fallback — any market in same district
+        if price_val is None and 'district' in live_df.columns:
+            dist_df = live_df[live_df['district'].str.upper() == str(flagged_row['District']).upper()]
+            if not dist_df.empty:
+                price_val = dist_df['modal_price'].iloc[0]
+                matched_market_name = dist_df['market'].iloc[0].title() + " (nearby)"
+    flag_price = f"₹{price_val}/qtl" if price_val else "No price data for this commodity"
+    flag_icon = folium.DivIcon(
+        html=f"""
+            <div style="
+                font-size: 28px;
+                line-height: 1;
+                filter: drop-shadow(0 0 6px #e74c3c);
+                animation: flagPulse 1s ease-in-out infinite alternate;
+            ">🚩</div>
+            <style>
+                @keyframes flagPulse {{
+                    from {{ transform: scale(1);   filter: drop-shadow(0 0 4px #e74c3c); }}
+                    to   {{ transform: scale(1.3); filter: drop-shadow(0 0 12px #e74c3c); }}
+                }}
+            </style>
+        """,
+        icon_size=(35, 35),
+        icon_anchor=(4, 34),
+    )
+    folium.Marker(
+        location=[flagged_row['latitude'], flagged_row['longitude']],
+        icon=flag_icon,
+        tooltip=folium.Tooltip(
+            f"<b>🚩 {flagged_row['Market']}</b><br>"
+            f"Matched: {matched_market_name}<br>"
+            f"District: {flagged_row['District']}<br>"
+            f"Price: {flag_price}",
+            sticky=True
+        ),
+        popup=folium.Popup(
+            f"<b>{flagged_row['Market']}</b><br>{flagged_row['District']}<br>{flag_price}",
+            max_width=200
+        )
+    ).add_to(m)
+
 # CRITICAL: returned_objects=[] prevents the map from causing reruns on zoom/move
-st_folium(m, height=750, returned_objects=[], key="mandi_map", width="stretch")
+st_folium(m, height=750, returned_objects=[], key=f"mandi_map_{map_search}", width="stretch")
 
 st.markdown("---")
 

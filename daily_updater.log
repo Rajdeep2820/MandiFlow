@@ -1,3 +1,24 @@
 2026-03-22 19:32:42,966 - INFO - 🚀 Waking up for automated fetch: 22/03/2026
 2026-03-22 19:32:43,295 - INFO - ✅ Extracted 0 official records from data.gov.in
-2026-03-22 19:32:43,295 - INFO - ℹ️ No records found on government server for today. Markets might be closed.
+2026-03-22 19:32:43,295 - INFO - ℹ️ No records found on government server for today. Markets might be closed today.
+2026-03-22 20:15:40,426 - INFO - 📖 Reading Parquet Dictionary to determine Catch-Up window...
+2026-03-22 23:55:10,130 - INFO - 📖 Reading Parquet Dictionary to determine Catch-Up window...
+2026-03-24 01:17:47,659 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-24 01:17:49,408 - INFO - 🚀 Waking up for Catch-Up fetch! (21/03/2026 -> 24/03/2026)
+2026-03-24 01:17:50,350 - INFO - ✅ Fetched 0      total records for 21/03/2026 (1 page(s))
+2026-03-24 01:17:51,400 - INFO - ✅ Fetched 0      total records for 22/03/2026 (1 page(s))
+2026-03-24 01:17:52,596 - INFO - ✅ Fetched 0      total records for 23/03/2026 (1 page(s))
+2026-03-24 01:17:53,841 - INFO - ✅ Fetched 0      total records for 24/03/2026 (1 page(s))
+2026-03-24 01:17:54,346 - INFO - ℹ️ No records found on government server for any new days. Markets might be closed.
+2026-03-24 23:55:03,459 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-24 23:55:07,987 - INFO - 🚀 Waking up for Catch-Up fetch! (21/03/2026 -> 24/03/2026)
+2026-03-24 23:55:42,607 - ERROR - ⚠️ Network Exception for 21/03/2026 offset=0: HTTPSConnectionPool(host='api.data.gov.in', port=443): Read timed out.
+2026-03-24 23:55:42,608 - INFO - ✅ Fetched 0      total records for 21/03/2026 (1 page(s))
+2026-03-24 23:55:48,794 - INFO - ✅ Fetched 10000  total records for 22/03/2026 (2 page(s))
+2026-03-24 23:56:32,877 - ERROR - ⚠️ Network Exception for 23/03/2026 offset=0: HTTPSConnectionPool(host='api.data.gov.in', port=443): Read timed out.
+2026-03-24 23:56:32,879 - INFO - ✅ Fetched 0      total records for 23/03/2026 (1 page(s))
+2026-03-24 23:57:15,779 - INFO - ✅ Fetched 10000  total records for 24/03/2026 (2 page(s))
+2026-03-24 23:57:16,472 - INFO - 📖 Loading only ID columns for label-encoding lookup...
+2026-03-24 23:58:30,962 - INFO - ➕ Auto-mapped 7 new 'Market' entries into Matrix IDs!
+2026-03-24 23:58:41,724 - INFO - ➕ Auto-mapped 8 new 'Commodity' entries into Matrix IDs!
+2026-03-24 23:58:44,287 - INFO - 🔗 Streaming 20000 new rows into Parquet (batch append)...
