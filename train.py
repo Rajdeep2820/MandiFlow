@@ -1,49 +1,84 @@
 import torch
+import torch.nn as nn
 import torch.optim as optim
-import scipy.sparse as sparse
-import pandas as pd
-import numpy as np
+from data_loader import MandiParquetDataset
 from model import MandiFlowNet
+import time
+import argparse
 
-# 1. Load the Graph Map (Adjacency Matrix) nothing just trying
-print("🕸️ Loading Graph Structure...")
-adj = sparse.load_npz("mandi_adjacency.npz")
-row, col = adj.nonzero()
-edge_index = torch.tensor(np.array([row, col]), dtype=torch.long)
-
-# 2. Load a Subset of 75M rows (Memory efficient)
-# We start with just one day to verify the "Brain" works
-print("📖 Loading Data Sample...")
-df = pd.read_parquet("mandi_master_data.parquet", columns=['Modal_Price', 'month_sin', 'month_cos', 'Market_ID'])
-# Take a snapshot of the most recent data
-sample_data = df.tail(6457) # One record per Mandi
-
-# Convert to Tensor (Math: Matrix Representation)
-# Features: [Price, month_sin, month_cos]
-x = torch.tensor(sample_data[['Modal_Price', 'month_sin', 'month_cos']].values, dtype=torch.float)
-
-# 3. Setup Training
-model = MandiFlowNet(node_features=3, hidden_dim=64, output_dim=1)
-optimizer = optim.Adam(model.parameters(), lr=0.01)
-criterion = torch.nn.MSELoss()
-
-# 4. Training Loop
-print("🚀 Starting Test Training...")
-for epoch in range(1, 11):
-    model.train()
-    optimizer.zero_grad()
+def train(commodity="ONION", limit=None, epochs=10): # Added epochs parameter
+    # 1. Pipeline Setup
+    device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
+    print(f"🚀 Training for {commodity} on Apple Silicon: {device}")
     
-    # Forward Pass
-    out = model(x, edge_index)
+    dataset = MandiParquetDataset("mandi_master_data.parquet", commodity=commodity)
     
-    # Target: For testing, try to predict the same price
-    loss = criterion(out, x[:, 0].unsqueeze(1))
+    # Model (7 trailing days -> 4 future days)
+    model = MandiFlowNet(node_features=7, hidden_dim=64, output_dim=4).to(device)
     
-    # Backward Pass (Math: Gradient Descent)
-    loss.backward()
-    optimizer.step()
+    # Optimizer & Loss
+    optimizer = optim.AdamW(model.parameters(), lr=0.001, weight_decay=1e-4)
+    criterion = nn.MSELoss()
     
-    if epoch % 2 == 0:
-        print(f"Epoch {epoch} | Loss: {loss.item():.4f}")
+    print(f"Initiating historical data stream for {commodity}...")
+    
+    # 2. Training Loop (Now with Epochs!)
+    try:
+        for epoch in range(1, epochs + 1):
+            print(f"\n--- Starting Epoch {epoch}/{epochs} ---")
+            model.train()
+            total_loss = 0.0
+            count = 0
+            start_time = time.time()
+            
+            for batch_graph in dataset:
+                optimizer.zero_grad()
+                
+                # 🚨 THE FIX: Move data to the Apple Silicon GPU!
+                # Note: Depending on how your batch_graph is structured, you might need to do:
+                # x = batch_graph.x.to(device)
+                # edge_index = batch_graph.edge_index.to(device)
+                # etc... 
+                batch_graph = batch_graph.to(device) 
+                
+                # Forward pass
+                predictions = model(batch_graph.x, batch_graph.edge_index, batch_graph.edge_weight)
+                
+                # Calculate error
+                loss = criterion(predictions, batch_graph.y)
+                
+                # Backpropagation
+                loss.backward()
+                optimizer.step()
+                
+                total_loss += loss.item()
+                count += 1
+                
+                if count % 100 == 0:
+                    avg_loss = total_loss / 100
+                    elapsed = time.time() - start_time
+                    print(f"[Epoch {epoch} | {count} Days Processed] MSE Loss: {avg_loss:.2f} | Speed: {100/elapsed:.1f} batches/sec")
+                    total_loss = 0.0
+                    start_time = time.time()
+                    
+                # Optional limit for testing/debugging
+                if limit and count >= limit:
+                    print(f"Reached training limit of {limit} days for this epoch.")
+                    break
+                    
+    except KeyboardInterrupt:
+        print("\n🛑 Manual interrupt detected. Stopping early and saving current brain state...")
 
-print("✅ SUCCESS: MandiFlow is learning.")
+    # 3. Save the Brain
+    weights_path = f"mandiflow_gcn_lstm_{commodity.lower()}.pth"
+    torch.save(model.state_dict(), weights_path)
+    print(f"✅ Model weights saved to {weights_path}")
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--commodity", type=str, default="ONION", help="Commodity to train for")
+    parser.add_argument("--limit", type=int, default=None, help="Number of days to train per epoch (None for all)")
+    parser.add_argument("--epochs", type=int, default=10, help="Number of full passes over the dataset")
+    args = parser.parse_args()
+    
+    train(args.commodity, args.limit, args.epochs)

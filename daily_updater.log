@@ -86,3 +86,16 @@
 2026-03-25 14:58:09,502 - INFO - ➕ Auto-mapped 17 new 'Market' entries into Matrix IDs!
 2026-03-25 14:58:12,492 - INFO - 🔗 Streaming 65556 new rows into Parquet (batch append)...
 2026-03-25 14:58:35,303 - INFO - 🎉 SUCCESS! Parquet updated. Appended 65556 rows. Total: 75578461
+2026-03-26 23:55:02,928 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-26 23:55:07,252 - INFO - 🚀 Waking up for Catch-Up fetch! (25/03/2026 -> 26/03/2026)
+2026-03-26 23:55:54,539 - ERROR - ⚠️ Network Exception for 25/03/2026 offset=0: HTTPSConnectionPool(host='api.data.gov.in', port=443): Read timed out.
+2026-03-26 23:55:54,540 - ERROR - Halting catch-up fetch to prevent data gap!
+2026-03-27 01:36:40,534 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-27 01:36:42,498 - INFO - 🚀 Waking up for Catch-Up fetch! (25/03/2026 -> 27/03/2026)
+2026-03-27 01:36:51,776 - INFO - ✅ Fetched 17293  total records for 25/03/2026 (2 page(s))
+2026-03-27 01:36:53,671 - INFO - ✅ Fetched 1      total records for 26/03/2026 (1 page(s))
+2026-03-27 01:36:55,088 - INFO - ✅ Fetched 0      total records for 27/03/2026 (1 page(s))
+2026-03-27 01:36:55,653 - INFO - 📖 Loading only ID columns for label-encoding lookup...
+2026-03-27 01:37:32,089 - INFO - ➕ Auto-mapped 4 new 'Market' entries into Matrix IDs!
+2026-03-27 01:37:37,211 - INFO - 🔗 Streaming 17294 new rows into Parquet (batch append)...
+2026-03-27 01:37:59,434 - INFO - 🎉 SUCCESS! Parquet updated. Appended 17294 rows. Total: 75593340

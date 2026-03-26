@@ -997,10 +997,12 @@ with st.sidebar:
     st.markdown("---")
 
     # 3.3 Simulation & Shock Controls
-    st.header("⚡ Simulation Rules")
-    st.caption("Input real-world events or news specifically targeting districts (e.g. 'Floods in Nashik') to simulate structural shock in the GCN.")
-    news_headline = st.text_area("News / Shock Trigger", "Normal market conditions", height=100)
+    st.header("⚡ Phase II Forecast Engine")
+    st.caption("Enter news or upload policy docs to simulate structural shock in the GCN-LSTM.")
+    news_headline = st.text_area("News / Shock Trigger", "Normal market conditions", height=80)
+    uploaded_doc = st.file_uploader("Upload Policy Doc (PDF/TXT)", type=["pdf", "txt", "docx"])
     
+    predict_btn = st.button("🚀 Predict Impact (1-7 Days)", use_container_width=True, type="primary")
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("""
         <div style='text-align: center; color: #666; font-size: 0.75rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;'>
@@ -1249,6 +1251,65 @@ if flagged_row is not None:
 st_folium(m, height=750, returned_objects=[], key=f"mandi_map_{map_search}", width="stretch")
 
 st.markdown("---")
+
+if 'predict_btn' in locals() and predict_btn:
+    st.markdown("### 📈 AI Price Forecasts (Zero-Shot NLP + GCN-LSTM)")
+    with st.spinner("Extracting shock features & running spatio-temporal simulation math..."):
+        from simulator import simulate_shock
+        from document_processor import DocumentProcessor
+        import altair as alt
+
+        doc_text = ""
+        if uploaded_doc is not None:
+            processor = DocumentProcessor()
+            doc_chunks = processor.process_document(uploaded_doc, is_pdf=uploaded_doc.name.endswith('.pdf'))
+            if isinstance(doc_chunks, list): doc_text = " ".join(doc_chunks)
+            
+        result = simulate_shock(news_headline, doc_text, commodity=commodity)
+        
+        st.success("Simulation Complete")
+        with st.expander("🔍 Extracted Shock Features (JSON)"):
+            st.json(result["features"])
+            
+        cols = st.columns(2)
+        
+        # 1. Target node chart
+        with cols[0]:
+            st.markdown(f"**Origin Impact:** {result['origin_name']}")
+            days = [1, 3, 5, 7]
+            df_origin = pd.DataFrame({"Days": days, "Predicted Price (₹/q)": result['origin_forecast']})
+            chart_origin = alt.Chart(df_origin).mark_line(point=True, color="#ff4b4b").encode(
+                x=alt.X("Days:O", title="Days Ahead"),
+                y=alt.Y("Predicted Price (₹/q):Q", scale=alt.Scale(zero=False), title="Modal Price")
+            ).properties(height=280)
+            st.altair_chart(chart_origin, use_container_width=True)
+            
+        # 2. Ripples chart
+        with cols[1]:
+            if len(result['served_areas']) > 0:
+                # Combine all served area forecasts into one dataframe for a multi-line chart
+                frames = []
+                days = [1, 3, 5, 7]
+                for served in result['served_areas']:
+                    df_temp = pd.DataFrame({
+                        "Days": days, 
+                        "Predicted Price (₹/q)": served['forecast'],
+                        "Mandi": served['mandi']
+                    })
+                    frames.append(df_temp)
+                
+                df_served = pd.concat(frames)
+                st.markdown(f"**Ripple Effect (Served Areas):** {len(frames)} connected nodes")
+                
+                chart_served = alt.Chart(df_served).mark_line(point=True).encode(
+                    x=alt.X("Days:O", title="Days Ahead"),
+                    y=alt.Y("Predicted Price (₹/q):Q", scale=alt.Scale(zero=False), title="Modal Price"),
+                    color=alt.Color("Mandi:N", legend=alt.Legend(title="Served Area", orient="bottom"))
+                ).properties(height=280)
+                st.altair_chart(chart_served, use_container_width=True)
+            else:
+                st.info("No highly correlated 'Served Areas' found in the dataset for this origin.")
+    st.markdown("---")
 
 # --- 5. DATA TABLE SEARCH ---
 st.markdown("### Mandi Prices")
