@@ -1381,11 +1381,39 @@ st.markdown("""
     [data-testid="stSidebarUserContent"] {
         padding-top: 0rem !important;
     }
+    [data-testid="stHeader"] {
+        height: 0 !important;
+        min-height: 0 !important;
+        background: transparent !important;
+        border: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    [data-testid="stHeaderActionElements"],
+    [data-testid="stDecoration"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+    [data-testid="collapsedControl"] {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        z-index: 2147483001 !important;
+    }
     
     /* Main Content Top Overrides */
-    .block-container {
-        padding-top: 2rem !important;
+    [data-testid="stAppViewContainer"] > .main {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
     }
+    .block-container {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+    #mf-navbar-anchor { height: 0 !important; margin: 0 !important; padding: 0 !important; }
     
     @keyframes pulse {
         0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
@@ -1446,7 +1474,66 @@ st.markdown("""
     .mf-side-btn { height: 40px; margin-bottom: 14px; border-radius: 10px; }
     .mf-side-subtitle { height: 16px; width: 58%; margin-bottom: 10px; border-radius: 8px; }
     .mf-side-textarea { height: 100px; border-radius: 10px; }
-    @media (max-width: 900px) {
+    #mf-navbar-anchor + div[data-testid="stHorizontalBlock"] {
+        position: fixed;
+        top: 0;
+        left: var(--mf-sidebar-width, 0px);
+        right: 0;
+        z-index: 2147483000 !important;
+        background: rgba(11, 15, 25, 0.72) !important;
+        backdrop-filter: blur(14px) saturate(140%) !important;
+        -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.30) !important;
+        box-shadow: 0 8px 20px rgba(2, 8, 23, 0.24) !important;
+        padding: 10px 16px;
+        margin: 0 !important;
+        box-sizing: border-box;
+    }
+    #mf-navbar-anchor + div[data-testid="stHorizontalBlock"]::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -1px;
+        height: 8px;
+        pointer-events: none;
+        background: linear-gradient(to bottom, rgba(148, 163, 184, 0.18), rgba(148, 163, 184, 0));
+    }
+    #mf-navbar-anchor + div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+    }
+    .st-key-nav_commodity_select div[data-baseweb="select"] { min-height: 40px; }
+    .st-key-nav_mandi_search div[data-baseweb="input"] { min-height: 40px; border-radius: 12px !important; }
+    .st-key-nav_mandi_search div[data-baseweb="input"]:focus-within {
+        box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.40), 0 0 14px rgba(56, 189, 248, 0.20) !important;
+    }
+    .mf-nav-user {
+        width: 100%;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: #e6edf9;
+        font-size: 0.92rem;
+        font-weight: 600;
+        padding-right: 4px;
+    }
+    .st-key-top_nav_logout button {
+        border-radius: 10px !important;
+        min-height: 40px !important;
+        min-width: 110px !important;
+        border: 1px solid rgba(148, 163, 184, 0.55) !important;
+        background: transparent !important;
+    }
+    .st-key-top_nav_logout button:hover {
+        background: rgba(220, 38, 38, 0.16) !important;
+        border-color: rgba(248, 113, 113, 0.95) !important;
+    }    @media (max-width: 900px) {
         .mf-load-filters { grid-template-columns: 1fr 1fr; }
     }
     </style>
@@ -1477,18 +1564,70 @@ def render_loading_skeleton():
         unsafe_allow_html=True,
     )
 
-# --- 3. SIDEBAR CONTROLS ---
-main_loading_slot = None
-sidebar_loading_slot = None
-sidebar_status_slot = None
+auth_user = st.session_state.get("auth_user", {})
+
+STAR_PREFIX = "\u2b50 "
+_prime, _others = get_active_prime_commodities()
+prime_display = [f"{STAR_PREFIX}{c}" for c in _prime]
+all_options = prime_display + _others
+_onion_display = f"{STAR_PREFIX}Onion"
+default_idx = all_options.index(_onion_display) if _onion_display in all_options else 0
+if "nav_commodity_select" not in st.session_state:
+    st.session_state.nav_commodity_select = all_options[default_idx]
+
+st.markdown('<div id="mf-navbar-anchor"></div>', unsafe_allow_html=True)
+st.markdown(
+    """
+    <script>
+    (() => {
+      const root = document.documentElement;
+      const update = () => {
+        const sidebar = document.querySelector('[data-testid="stSidebar"]');
+        if (!sidebar) return root.style.setProperty("--mf-sidebar-width", "0px");
+        const r = sidebar.getBoundingClientRect();
+        const hidden = sidebar.getAttribute("aria-expanded") === "false" || r.width < 56;
+        root.style.setProperty("--mf-sidebar-width", `${hidden ? 0 : Math.round(r.width)}px`);
+      };
+      update();
+      window.addEventListener("resize", update, { passive: true });
+      const ro = new ResizeObserver(update);
+      ro.observe(document.body);
+      const sb = document.querySelector('[data-testid="stSidebar"]');
+      if (sb) ro.observe(sb);
+    })();
+    </script>
+    """,
+    unsafe_allow_html=True,
+)
+
+nav_commodity_col, nav_search_col, nav_user_col = st.columns([2.5, 3.5, 4.0], gap="small")
+with nav_commodity_col:
+    selected_display = st.selectbox(
+        "Commodity",
+        options=all_options,
+        key="nav_commodity_select",
+        label_visibility="collapsed",
+    )
+    commodity = selected_display.replace(STAR_PREFIX, "").replace("⭐ ", "").replace("â­ ", "").replace("? ", "").strip()
+    set_cursor_commodity(commodity)
+with nav_search_col:
+    map_search = st.text_input(
+        "Search",
+        placeholder="Search state or mandi...",
+        key="nav_mandi_search",
+        label_visibility="collapsed",
+    )
+with nav_user_col:
+    safe_email = html.escape(str(auth_user.get("email", "unknown")))
+    user_text_col, logout_col = st.columns([0.67, 0.33], gap="small")
+    with user_text_col:
+        st.markdown(f'<div class="mf-nav-user" title="{safe_email}">{safe_email}</div>', unsafe_allow_html=True)
+    with logout_col:
+        if st.button("Logout", key="top_nav_logout", use_container_width=True, type="secondary"):
+            logout_user()
+            st.rerun()
 
 with st.sidebar:
-    auth_user = st.session_state.get("auth_user", {})
-    st.caption(f"Signed in as: {auth_user.get('email', 'unknown')}")
-    if st.button("Logout", use_container_width=True, type="secondary"):
-        logout_user()
-        st.rerun()
-    st.markdown("---")
 
     st.markdown("""
         <div style='text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);'>
@@ -1497,27 +1636,7 @@ with st.sidebar:
         </div>
     """, unsafe_allow_html=True)
     
-    st.header("🕹️ Controls")
-    
-    # 3.1 Main Commodity Selector — dynamically filtered by recency
-    # prime = top 7 with trades in last 7 days; stale ones are automatically replaced
-    _prime, _others = get_active_prime_commodities()
-    prime_display = [f"⭐ {c}" for c in _prime]
-    all_options   = prime_display + _others
-
-    # Default to ⭐ Onion if active, otherwise first prime
-    _onion_display = "⭐ Onion"
-    default_idx = all_options.index(_onion_display) if _onion_display in all_options else 0
-
-    selected_display = st.selectbox(
-        "Market Asset",
-        options=all_options,
-        index=default_idx,
-        help="⭐ = Active prime (traded in last 7 days). Stale commodities are auto-demoted."
-    )
-    # Strip the ⭐ prefix before using the value anywhere
-    commodity = selected_display.replace("⭐ ", "").strip()
-    set_cursor_commodity(commodity)
+    st.header("🕹️ Controls")    # Commodity selector moved to top navbar.
     sidebar_loading_slot = st.empty()
 
     # 3.2 Network Status Widget
@@ -1666,20 +1785,8 @@ else:
     render_loading_skeleton()
 
 # --- MAP SEARCH BAR ---
-# Counter-key pattern: changing the key forces Streamlit to create a new empty widget
-if "search_counter" not in st.session_state:
-    st.session_state.search_counter = 0
-
-search_col, clear_col = st.columns([5, 1])
-map_search = search_col.text_input(
-    "🔍 Search map",
-    placeholder="Type a state (e.g. Maharashtra) or mandi name (e.g. Nashik)...",
-    label_visibility="collapsed",
-    key=f"map_search_input_{st.session_state.search_counter}"
-)
-if clear_col.button("✕ Clear", use_container_width=True):
-    st.session_state.search_counter += 1
-    st.rerun()
+# Search is sourced from navbar input.
+map_search = st.session_state.get("nav_mandi_search", map_search if 'map_search' in locals() else "")
 
 # --- RESOLVE SEARCH ---
 map_center   = [22.9734, 78.6569]  # Default: India centre
@@ -2022,3 +2129,5 @@ else:
 
 st.markdown("---")
 st.caption(f"System status: Operational | Latest Update: {st.session_state.get('last_update', 'N/A')}")
+
+
