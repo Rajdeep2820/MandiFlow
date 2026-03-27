@@ -13,26 +13,23 @@ class NewsAnalyzer:
             self.client = None
         
         self.system_prompt = """
-        You are an Indian agricultural commodity market intelligence AI.
-        Analyze the following news or policy document chunk.
+        You are an Indian agricultural commodity market intelligence AI. 
+        Analyze the following news or policy document chunk. 
         Extract mathematical shock impacts for the supply chain using this EXACT JSON schema:
-
+        
         {
-            "commodities_affected": ["Onion", "Potato"],
-            "origin_mandi": "LASALGAON (NIPHAD)",
-            "origin_district": "Nashik",
-            "shock_type": "climatic",
-            "impact_multiplier": 1.5
+            "commodities_affected": ["Onion", "Potato"], 
+            "origin_mandi": "Mandsaur", // MUST be the actual city, district, or market name (e.g., Harda, Nashik). NEVER extract adjectives like 'Heavy', 'Massive', or 'Sudden'.
+            "shock_type": "climatic", // Must be: 'climatic', 'logistics', 'policy', 'demand'
+            "impact_multiplier": 1.5 // e.g. 1.5 = 50% spike, 0.7 = 30% drop
         }
-
+        
         Rules:
-        1. origin_mandi must be the most specific physical mandi / auction yard / market named or implied by the text, not a generic state.
-        2. If the text mentions a district or city but the agricultural mandi is commonly known by a related market yard, choose the likely mandi name.
-        3. If it's a strike/blockade, use "logistics" and multiplier > 1.0.
-        4. If it's heavy rain/crop damage, use "climatic" and multiplier > 1.0.
-        5. If it's an export ban, use "policy" and multiplier < 1.0 for origin.
-        6. If there is no clear location, set both origin_mandi and origin_district to "Unknown".
-        7. Only respond with raw JSON. No markdown.
+        1. If it's a strike/blockade, use 'logistics' and multiplier > 1.0.
+        2. If it's heavy rain/crop damage, use 'climatic' and multiplier > 1.0.
+        3. If it's an export ban, use 'policy' and multiplier < 1.0 for origin.
+        4. Extract the true geographical location for origin_mandi, ignoring descriptive words.
+        5. Only respond with raw JSON. No markdown.
         """
 
     def _mock_llm_response(self, text):

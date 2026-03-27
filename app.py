@@ -998,9 +998,49 @@ with st.sidebar:
 
     # 3.3 Simulation & Shock Controls
     st.header("⚡ Phase II Forecast Engine")
-    st.caption("Enter news or upload policy docs to simulate structural shock in the GCN-LSTM.")
-    news_headline = st.text_area("News / Shock Trigger", "Normal market conditions", height=80)
+    st.caption("Use structured inputs to build a deterministic shock prompt for the GCN-LSTM.")
+    forecast_commodity = st.selectbox(
+        "1. Target Commodity",
+        options=["ONION", "WHEAT", "GARLIC", "POTATO"],
+        index=0,
+    )
+    origin_market = st.selectbox(
+        "2. Origin Market (Epicenter)",
+        options=[
+            "Lasalgaon",
+            "Azadpur",
+            "Mandsaur",
+            "Pune",
+            "Mumbai",
+            "Indore",
+            "Nashik",
+            "Bangalore",
+            "Kolkata",
+            "Ahmedabad",
+        ],
+        index=0,
+    )
+    shock_event = st.selectbox(
+        "3. Select Shock Event",
+        options=[
+            "Heavy Rain / Flood",
+            "Drought / Heatwave",
+            "Truckers Strike",
+            "Logistics / Delivery Delays",
+            "Farmers Protest",
+            "Policy Change / Government Action",
+        ],
+        index=0,
+    )
+    policy_or_news_text = ""
+    if shock_event == "Policy Change / Government Action":
+        policy_or_news_text = st.text_area("Paste Policy Details or News", height=100)
     uploaded_doc = st.file_uploader("Upload Policy Doc (PDF/TXT)", type=["pdf", "txt", "docx"])
+    
+    if shock_event == "Policy Change / Government Action":
+        shock_context_text = policy_or_news_text.strip()
+    else:
+        shock_context_text = f"{origin_market} {shock_event}"
     
     predict_btn = st.button("🚀 Predict Impact (1-7 Days)", use_container_width=True, type="primary")
     st.markdown("<br>", unsafe_allow_html=True)
@@ -1172,7 +1212,7 @@ if not coords_df.empty:
         dist = str(row['District']).lower()
         
         # Shock Logic (Red)
-        is_shocked = any(word.lower() in news_headline.lower() for word in dist.split())
+        is_shocked = any(word.lower() in shock_context_text.lower() for word in dist.split())
         color = "#e74c3c" if is_shocked else "#2ecc71"
         
         # Tooltip with HTML for clear hover reading
@@ -1266,9 +1306,18 @@ if 'predict_btn' in locals() and predict_btn:
         if uploaded_doc is not None:
             processor = DocumentProcessor()
             doc_chunks = processor.process_document(uploaded_doc, is_pdf=uploaded_doc.name.endswith('.pdf'))
-            if isinstance(doc_chunks, list): doc_text = " ".join(doc_chunks)
+            if isinstance(doc_chunks, list):
+                doc_text = " ".join(doc_chunks)
+
+        if shock_event == "Policy Change / Government Action":
+            if not policy_or_news_text.strip():
+                st.error("Paste Policy Details or News is required for policy-driven shocks.")
+                st.stop()
+            synthetic_news_text = f"At the {origin_market} market, a new policy was announced: {policy_or_news_text.strip()}"
+        else:
+            synthetic_news_text = f"The {origin_market} market is experiencing {shock_event}."
             
-        result = simulate_shock(news_headline, doc_text, commodity=commodity)
+        result = simulate_shock(synthetic_news_text, doc_text, commodity=forecast_commodity)
         
         with st.expander("🔍 Extracted Shock Features (JSON)"):
             st.json(result["features"])

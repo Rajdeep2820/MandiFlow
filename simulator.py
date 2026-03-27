@@ -249,9 +249,20 @@ def simulate_shock(news_text, doc_text="", commodity="ONION"):
     }
 
     # Locate strongly correlated neighbors
+    # Locate strongly correlated neighbors
     if adj.shape[0] > target_idx:
-        neighbors = adj[target_idx].indices
-        for neighbor_id in neighbors[:5]:
+        row = adj[target_idx]
+        
+        # Zip the connected node IDs (.indices) with their correlation strengths (.data)
+        connections = list(zip(row.indices, row.data))
+        
+        # Sort them by strength (weight) in descending order (highest correlation first)
+        connections.sort(key=lambda x: x[1], reverse=True)
+        
+        # Grab the top 5 node IDs with the strongest mathematical connection
+        top_neighbors = [idx for idx, weight in connections[:5]]
+        
+        for neighbor_id in top_neighbors:
             neighbor_curve = pred_cpu[neighbor_id] / (pred_cpu[neighbor_id][0] + 1e-5)
             neighbor_forecast = base_price * neighbor_curve
 
