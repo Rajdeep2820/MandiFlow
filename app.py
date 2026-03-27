@@ -756,7 +756,7 @@ def require_authentication():
         with st.form("login_form"):
             login_email = st.text_input("Email", key="login_email")
             login_password = st.text_input("Password", type="password", key="login_password")
-            login_submit = st.form_submit_button("Sign In", use_container_width=True)
+            login_submit = st.form_submit_button("Sign In", width="stretch")
 
         if login_submit:
             if not login_email or not login_password:
@@ -1260,7 +1260,7 @@ if 'predict_btn' in locals() and predict_btn:
         import altair as alt
 
         # Dynamically inject the API key into the analyzer before simulation
-        analyzer = NewsAnalyzer(api_key=st.session_state.get('gemini_api_key', ''))
+        analyzer = NewsAnalyzer(api_key=st.session_state.get('GEMINI_API_KEY', ''))
         
         doc_text = ""
         if uploaded_doc is not None:
@@ -1270,10 +1270,14 @@ if 'predict_btn' in locals() and predict_btn:
             
         result = simulate_shock(news_headline, doc_text, commodity=commodity)
         
-        st.success("Simulation Complete")
         with st.expander("🔍 Extracted Shock Features (JSON)"):
             st.json(result["features"])
-            
+        
+        if result.get("resolution_error"):
+            st.error(f"Node not found in historical data: {result['resolution_error']}")
+            st.stop()
+        
+        st.success("Simulation Complete")
         cols = st.columns(2)
         
         # 1. Target node chart
@@ -1309,7 +1313,9 @@ if 'predict_btn' in locals() and predict_btn:
                     y=alt.Y("Predicted Price (₹/q):Q", scale=alt.Scale(zero=False), title="Modal Price"),
                     color=alt.Color("Mandi:N", legend=alt.Legend(title="Served Area", orient="bottom"))
                 ).properties(height=280)
-                st.altair_chart(chart_served, use_container_width=True)
+                
+                # 🚨 THE FIX: Streamlit's new responsive width syntax
+                st.altair_chart(chart_served, width="stretch")
             else:
                 st.info("No highly correlated 'Served Areas' found in the dataset for this origin.")
     st.markdown("---")
