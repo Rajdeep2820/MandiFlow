@@ -174,6 +174,8 @@ def fetch_trailing_history(origin_name, commodity):
     return None
 
 
+# ... (Imports and Setup remain the same)
+
 def simulate_shock(news_text, doc_text="", commodity="ONION"):
     combined = f"{news_text} {doc_text}".strip()
 
@@ -191,91 +193,80 @@ def simulate_shock(news_text, doc_text="", commodity="ONION"):
     impact_factor = features_json.get("impact_multiplier", 1.0)
     extracted_origin = features_json.get("origin_mandi", "Unknown").strip()
     extracted_district = features_json.get("origin_district", "").strip()
+    
     resolved_origin_name, target_idx, match_strategy = resolve_market_name(
         extracted_origin,
         market_to_id,
         raw_district=extracted_district,
     )
 
-    # 3. Create a Graph Snapshot with DYNAMIC History
+    # 3. Fetch Dynamic History
     history_lookup_name = resolved_origin_name or _normalize_market_text(extracted_origin)
     trailing_prices = fetch_trailing_history(history_lookup_name, commodity)
 
     if trailing_prices is not None:
         base_price = trailing_prices[-1]
-        print(f"✅ Injected dynamic 7-day history for {history_lookup_name} ({commodity}): {trailing_prices}")
     else:
         base_price = 800.0
         trailing_prices = [base_price] * 7
-        print(f"⚠️ No history found for {history_lookup_name} ({commodity}). Using flat baseline: {base_price}")
 
     if target_idx is None:
-        print(f"🚨 STRING MATCH ERROR: Could not resolve extracted origin '{extracted_origin}' to any mandi in the graph index.")
         return {
             "features": features_json,
             "origin_name": extracted_origin or "Unknown",
-            "origin_forecast": trailing_prices[-4:],
+            "origin_forecast": [base_price] * 4,
             "served_areas": [],
-            "resolution_error": f"Unable to map extracted origin '{extracted_origin}' / district '{extracted_district or 'Unknown'}' to a known mandi for {commodity}.",
+            "resolution_error": f"Unable to map '{extracted_origin}' to a known mandi.",
         }
 
-    num_nodes = adj.shape[0] if adj.shape[0] > 0 else 10
-
-    # Provide actual 7 trailing days of features across the graph
-    x = torch.zeros((num_nodes, 7), dtype=torch.float32)
+    # 4. PREPARE INPUT TENSOR (Matching the Training Logic)
+    num_nodes = adj.shape[0]
+    x_raw = torch.full((num_nodes, 7), base_price, dtype=torch.float32)
+    
+    # Inject the actual history for all nodes (simplified assumption for simulation)
     for i in range(7):
-        x[:, i] = trailing_prices[i]
+        x_raw[:, i] = trailing_prices[i]
 
-    print(f"✅ Resolved extracted origin '{extracted_origin}' to '{resolved_origin_name}' via {match_strategy} match")
-    x[target_idx, 6] = base_price * impact_factor
-    x = x.to(device)
+    # APPLY THE NEWS SHOCK to the target mandi's latest feature
+    # This is what the model sees as an "Anomaly"
+    x_raw[target_idx, 6] = base_price * impact_factor
 
-    # 4. RUN Forward Pass across GCN-LSTM architecture
+    # SCALE INPUT (Same as train.py: Divide by base_price to get Ratios)
+    x_input = x_raw / (base_price + 1e-5)
+    x_input = x_input.to(device)
+
+    # 5. RUN FORWARD PASS
     with torch.no_grad():
-        predictions = model(x, edge_index, edge_weight)
+        # model output is now a RATIO (e.g., 1.05 for 5% increase)
+        predictions = model(x_input, edge_index, edge_weight)
 
-    # 5. Extract Results
-    pred_cpu = predictions.cpu().numpy()
+    pred_ratios = predictions.cpu().numpy()
 
-    # 6. Apply Curve Normalization
-    origin_curve = pred_cpu[target_idx] / (pred_cpu[target_idx][0] + 1e-5)
-    origin_forecast = (base_price * impact_factor) * origin_curve
+    # 6. CONVERT RATIOS BACK TO RUPEES
+    # Prediction * base_price gives the actual Rupee forecast
+    origin_forecast = pred_ratios[target_idx] * base_price
 
     result = {
         "features": features_json,
-        "origin_name": market_names[target_idx] if target_idx < len(market_names) else resolved_origin_name,
+        "origin_name": market_names[target_idx],
         "origin_forecast": origin_forecast.tolist(),
         "served_areas": [],
     }
 
-    # Locate strongly correlated neighbors
-    # Locate strongly correlated neighbors
+    # 7. PROPAGATE TO NEIGHBORS
     if adj.shape[0] > target_idx:
         row = adj[target_idx]
-        
-        # Zip the connected node IDs (.indices) with their correlation strengths (.data)
-        connections = list(zip(row.indices, row.data))
-        
-        # Sort them by strength (weight) in descending order (highest correlation first)
-        connections.sort(key=lambda x: x[1], reverse=True)
-        
-        # Grab the top 5 node IDs with the strongest mathematical connection
+        connections = sorted(list(zip(row.indices, row.data)), key=lambda x: x[1], reverse=True)
         top_neighbors = [idx for idx, weight in connections[:5]]
         
         for neighbor_id in top_neighbors:
-            neighbor_curve = pred_cpu[neighbor_id] / (pred_cpu[neighbor_id][0] + 1e-5)
-            neighbor_forecast = base_price * neighbor_curve
-
-            if impact_factor != 1.0:
-                ripple_effect = (impact_factor - 1.0) * 0.5
-                neighbor_forecast = neighbor_forecast * (1.0 + ripple_effect)
-
-            result["served_areas"].append(
-                {
-                    "mandi": market_names[neighbor_id],
-                    "forecast": neighbor_forecast.tolist(),
-                }
-            )
+            # The model already calculates how much the neighbor moves based on the graph!
+            neighbor_forecast = pred_ratios[neighbor_id] * base_price
+            
+            result["served_areas"].append({
+                "mandi": market_names[neighbor_id],
+                "forecast": neighbor_forecast.tolist(),
+            })
 
     return result
 

@@ -4,4 +4,7 @@ __pycache__/
 MinorP Dataset/
 *.parquet
 *.npz
+*.log
+*.pth
+.env
 .streamlit/secrets.toml
