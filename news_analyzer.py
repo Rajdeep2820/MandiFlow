@@ -1,64 +1,61 @@
 import json
 import os
-import requests
+import google.generativeai as genai
 
 class NewsAnalyzer:
     def __init__(self, api_key=None):
         """
         Decoupled feature extraction layer to turn unstructured news/docs into mathematical shocks.
-        Uses an LLM (mocked or via actual API).
+        Uses Google Gemini for zero-shot JSON extraction.
         """
-        self.api_key = api_key or os.getenv("LLM_API_KEY", "")
+        self.api_key = api_key or os.getenv("AIzaSyAVCB4Ps7W-ns9TQ7XNxrwEYRvaNFau8q8", "")
+        if self.api_key:
+            genai.configure(api_key=self.api_key)
+            self.model = genai.GenerativeModel('gemini-1.5-flash')
+        else:
+            self.model = None
         
         # System Prompt Engineering
         self.system_prompt = """
-        You are a commodity market intelligence AI. Analye the following news or policy document chunk.
-        Extract the mathematical shock impacts for the agricultural supply chain using this EXACT JSON schema:
+        You are an Indian agricultural commodity market intelligence AI. 
+        Analyze the following news or policy document chunk. 
+        Extract mathematical shock impacts for the supply chain using this EXACT JSON schema:
         
         {
-            "commodities_affected": ["Onion", "Potato"], // List of commodities
-            "origin_mandi": "Mandsaur", // The primary market or region affected (if any)
-            "shock_type": "climatic", // Must be one of: 'climatic', 'logistics', 'policy', 'demand'
-            "impact_multiplier": 1.5 // Multiplier on standard price (e.g. 1.5 means 50% price spike, 0.8 means 20% drop)
+            "commodities_affected": ["Onion", "Potato"], 
+            "origin_mandi": "Mandsaur", 
+            "shock_type": "climatic", // Must be: 'climatic', 'logistics', 'policy', 'demand'
+            "impact_multiplier": 1.5 // e.g. 1.5 = 50% spike, 0.7 = 30% drop
         }
         
-        Only respond with the raw JSON object. Do not include markdown formatting or explanations.
+        Rules:
+        1. If it's a strike/blockade, use 'logistics' and multiplier > 1.0.
+        2. If it's heavy rain/crop damage, use 'climatic' and multiplier > 1.0.
+        3. If it's an export ban, use 'policy' and multiplier < 1.0 for origin.
+        4. Only respond with raw JSON. No markdown.
         """
 
     def _mock_llm_response(self, text):
-        """
-        Fallback deterministic parsing if no API configured. 
-        """
+        """Fallback deterministic parsing if no API configured or if API fails."""
         text_lower = text.lower()
-        
-        # Determine Shock Type
         shock_type = "demand"
-        if "rain" in text_lower or "flood" in text_lower or "drought" in text_lower:
-            shock_type = "climatic"
-        elif "strike" in text_lower or "transport" in text_lower or "highway" in text_lower:
-            shock_type = "logistics"
-        elif "ban" in text_lower or "policy" in text_lower or "tax" in text_lower:
-            shock_type = "policy"
+        if any(w in text_lower for w in ["rain", "flood", "drought", "weather"]): shock_type = "climatic"
+        elif any(w in text_lower for w in ["strike", "transport", "highway", "truck"]): shock_type = "logistics"
+        elif any(w in text_lower for w in ["ban", "policy", "tax", "export", "import"]): shock_type = "policy"
             
-        # Determine Multiplier
         multiplier = 1.0
-        if shock_type in ["climatic", "logistics"]:
-            multiplier = 1.3 # Shortage implies price spike
-        if "ban" in text_lower and "export" in text_lower:
-            multiplier = 0.7 # Export ban crashes local origin price
+        if shock_type in ["climatic", "logistics"]: multiplier = 1.3
+        if "ban" in text_lower and "export" in text_lower: multiplier = 0.7
             
-        # Determine Origin
         origin = "Unknown"
-        if "mandsaur" in text_lower: origin = "Mandsaur"
-        elif "nashik" in text_lower: origin = "Nashik"
-        elif "delhi" in text_lower: origin = "Azadpur (Delhi)"
-        elif "mumbai" in text_lower: origin = "Mumbai"
+        for city in ["Mandsaur", "Nashik", "Azadpur", "Mumbai", "Pune", "Indore", "Nagpur"]:
+            if city.lower() in text_lower:
+                origin = city
+                break
         
-        # Determine Commodities
         comms = []
-        if "onion" in text_lower: comms.append("Onion")
-        if "potato" in text_lower: comms.append("Potato")
-        if "tomato" in text_lower: comms.append("Tomato")
+        for c in ["Onion", "Potato", "Tomato", "Wheat", "Rice"]:
+            if c.lower() in text_lower: comms.append(c)
         if not comms: comms.append("All")
         
         return {
@@ -69,34 +66,22 @@ class NewsAnalyzer:
         }
 
     def extract_shock_features(self, combined_text):
-        """
-        Takes raw text (news or PDF chunk) and outputs a structured JSON multiplier.
-        """
-        if not self.api_key:
+        """Takes raw text and outputs structured JSON via Gemini or Mock."""
+        if not self.api_key or not self.model:
             return self._mock_llm_response(combined_text)
             
-        # Example of a real LLM call (e.g. OpenAI or Gemini). 
-        # Here we mock the request structure to show how it plugs in.
         try:
-            # Simulated API Call
-            payload = {
-                "messages": [
-                    {"role": "system", "content": self.system_prompt},
-                    {"role": "user", "content": f"News/Doc: {combined_text}"}
-                ]
-            }
-            # response = requests.post("https://api.openai.com/v1/chat/completions", json=payload, headers={"Authorization": f"Bearer {self.api_key}"})
-            # content = response.json()['choices'][0]['message']['content']
-            # return json.loads(content)
+            prompt = f"{self.system_prompt}\n\nClient Input: {combined_text}"
+            response = self.model.generate_content(prompt)
             
-            # Since we didn't actually hit an API to avoid billing/keys issue here, we use mock
-            return self._mock_llm_response(combined_text)
+            # Clean potential markdown backticks
+            clean_json = response.text.replace("```json", "").replace("```", "").strip()
+            return json.loads(clean_json)
         except Exception as e:
-            print(f"Error parsing LLM JSON: {e}")
+            print(f"⚠️ LLM API Error: {e}. Falling back to heuristic model.")
             return self._mock_llm_response(combined_text)
 
-# Test It
 if __name__ == "__main__":
+    # Test it directly
     analyzer = NewsAnalyzer()
-    test_news = "Truckers strike on Delhi-Mumbai highway halts onion transport."
-    print("Test Output:", json.dumps(analyzer.extract_shock_features(test_news), indent=2))
+    print("Test Result:", analyzer.extract_shock_features("Heavy rain in Nashik destroyed onion crops."))

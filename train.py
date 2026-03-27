@@ -6,10 +6,10 @@ from model import MandiFlowNet
 import time
 import argparse
 
-def train(commodity="ONION", limit=None, epochs=10): # Added epochs parameter
+def train(commodity="ONION", limit=None, epochs=10):
     # 1. Pipeline Setup
     device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
-    print(f"🚀 Training for {commodity} on Apple Silicon: {device}")
+    print(f"🚀 Training for {commodity} on Hardware: {device}")
     
     dataset = MandiParquetDataset("mandi_master_data.parquet", commodity=commodity)
     
@@ -22,7 +22,7 @@ def train(commodity="ONION", limit=None, epochs=10): # Added epochs parameter
     
     print(f"Initiating historical data stream for {commodity}...")
     
-    # 2. Training Loop (Now with Epochs!)
+    # 2. Training Loop with Epochs
     try:
         for epoch in range(1, epochs + 1):
             print(f"\n--- Starting Epoch {epoch}/{epochs} ---")
@@ -34,11 +34,7 @@ def train(commodity="ONION", limit=None, epochs=10): # Added epochs parameter
             for batch_graph in dataset:
                 optimizer.zero_grad()
                 
-                # 🚨 THE FIX: Move data to the Apple Silicon GPU!
-                # Note: Depending on how your batch_graph is structured, you might need to do:
-                # x = batch_graph.x.to(device)
-                # edge_index = batch_graph.edge_index.to(device)
-                # etc... 
+                # Explicitly move pure CPU data from data_loader to Apple Silicon GPU
                 batch_graph = batch_graph.to(device) 
                 
                 # Forward pass
@@ -57,7 +53,7 @@ def train(commodity="ONION", limit=None, epochs=10): # Added epochs parameter
                 if count % 100 == 0:
                     avg_loss = total_loss / 100
                     elapsed = time.time() - start_time
-                    print(f"[Epoch {epoch} | {count} Days Processed] MSE Loss: {avg_loss:.2f} | Speed: {100/elapsed:.1f} batches/sec")
+                    print(f"[Epoch {epoch} | {count} Batches Processed] MSE Loss: {avg_loss:.2f} | Speed: {100/elapsed:.1f} batches/sec")
                     total_loss = 0.0
                     start_time = time.time()
                     

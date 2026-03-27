@@ -23,7 +23,7 @@ def get_resources(commodity):
     
     # 1. Load Adjacency
     if os.path.exists(adj_path):
-        adj = sparse.load_npz(adj_path)
+        adj = sparse.load_npz(adj_path).tocsr()
         row, col = adj.nonzero()
         edge_index = torch.tensor(np.array([row, col]), dtype=torch.long).to(device)
         edge_weight = torch.tensor(adj.data, dtype=torch.float32).to(device)

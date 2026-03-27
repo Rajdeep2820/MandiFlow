@@ -42,9 +42,9 @@ class MandiParquetDataset(IterableDataset):
         for batch in dataset.to_batches(batch_size=1000000):
             df = batch.to_pandas()
             
-            # Filter strictly for ONION to match the adjacency logic
+            # Filter strictly for the requested commodity to match the adjacency logic
             if 'Commodity' in df.columns:
-                df = df[df['Commodity'].str.upper() == 'ONION']
+                df = df[df['Commodity'].str.upper() == self.commodity]
             
             if df.empty: continue
             
@@ -61,7 +61,7 @@ class MandiParquetDataset(IterableDataset):
             pivot = pivot.reindex(columns=self.market_names)
             
             # Continuous daily resampling & filling
-            pivot = pivot.resample('D').mean().ffill(limit=7).fillna(1500.0) # Assume 1500 as base fallback
+            pivot = pivot.resample('D').mean().ffill(limit=7).fillna(1500.0)
             
             prices_array = pivot.values.astype(np.float32) # [T, N]
             T, N = prices_array.shape
@@ -88,7 +88,7 @@ class MandiParquetDataset(IterableDataset):
                 graph_data = Data(
                     x=torch.tensor(x_features, dtype=torch.float32),
                     edge_index=self.edge_index,
-                    edge_attr=self.edge_weight,
+                    edge_weight=self.edge_weight,
                     y=torch.tensor(y_targets, dtype=torch.float32)
                 )
                 

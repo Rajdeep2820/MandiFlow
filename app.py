@@ -1255,10 +1255,13 @@ st.markdown("---")
 if 'predict_btn' in locals() and predict_btn:
     st.markdown("### 📈 AI Price Forecasts (Zero-Shot NLP + GCN-LSTM)")
     with st.spinner("Extracting shock features & running spatio-temporal simulation math..."):
-        from simulator import simulate_shock
+        from simulator import simulate_shock, NewsAnalyzer
         from document_processor import DocumentProcessor
         import altair as alt
 
+        # Dynamically inject the API key into the analyzer before simulation
+        analyzer = NewsAnalyzer(api_key=st.session_state.get('gemini_api_key', ''))
+        
         doc_text = ""
         if uploaded_doc is not None:
             processor = DocumentProcessor()
