@@ -16,6 +16,7 @@ import urllib.parse
 import urllib.request
 from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
+from simulator import get_resources
 from live_engine import fetch_agmarknet_data
 # --- 1. DATA LOADING FUNCTIONS -----
 
@@ -122,6 +123,7 @@ def load_map_data():
     except Exception as e:
         st.error(f"Error loading map coordinates: {e}")
         return pd.DataFrame()
+    
 
 def render_main_loading_skeleton(slot):
     slot.markdown(
@@ -594,12 +596,24 @@ def require_authentication():
     st.markdown(
         """
         <style>
+        html, body {
+            height: 100vh !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
         [data-testid="stAppViewContainer"] {
-            background: linear-gradient(-45deg, #020f33, #041b4d, #020a1f, #000000);
-            background-size: 280% 280%;
-            animation: gradientMove 4.8s linear infinite;
-            position: relative;
-            overflow: hidden;
+            height: 100vh !important;
+            background: linear-gradient(-45deg, #020f33, #041b4d, #020a1f, #000000) !important;
+            background-size: 280% 280% !important;
+            animation: gradientMove 4.8s linear infinite !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            overflow: hidden !important;
+            z-index: 1 !important;
         }
         [data-testid="stAppViewContainer"]::before {
             content: "";
@@ -642,22 +656,28 @@ def require_authentication():
             padding-right: 4vw;
             box-sizing: border-box;
         }
-        [data-testid="stAppViewContainer"] > .main .block-container {
-            width: 50% !important;
-            max-width: 860px !important;
-            min-width: 320px !important;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 16px;
-            padding: 28px 32px 34px 32px !important;
-            border-radius: 20px;
-            background: linear-gradient(180deg, rgba(6, 16, 40, 0.78), rgba(2, 7, 20, 0.92));
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            border: 1px solid rgba(34, 211, 238, 0.22);
-            box-shadow: 0 18px 44px rgba(0, 0, 0, 0.72);
+[data-testid="stAppViewContainer"] > .main .block-container {
+            position: relative !important;
+            width: 100% !important;
+            max-width: 520px !important;
+            min-width: 340px !important;
+            min-height: 100vh !important;
+            height: auto !important;
+            max-height: 100vh !important;
+            overflow: hidden !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+            gap: 12px !important;
+            padding: 24px 20px !important;
+            box-sizing: border-box !important;
+            border-radius: 24px !important;
+            background: linear-gradient(180deg, rgba(6, 16, 40, 0.85), rgba(2, 7, 20, 0.95)) !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+            border: 1px solid rgba(34, 211, 238, 0.25) !important;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8) !important;
             margin: 0 auto !important;
         }
         .auth-bg-blob {
@@ -706,22 +726,25 @@ def require_authentication():
             margin-right: auto;
         }
         div[data-baseweb="tab-list"] {
-            gap: 12px;
-            margin: 10px 0 18px 0;
-            padding: 2px 0;
+            gap: 8px !important;
+            margin: 8px 0 12px 0 !important;
+            padding: 0 !important;
+            max-height: 60px !important;
+            overflow: hidden !important;
         }
         div[data-baseweb="tab-list"] button[role="tab"] {
-            border-radius: 16px !important;
+            border-radius: 12px !important;
             color: #dbe7ff !important;
             border: 1px solid rgba(71, 85, 105, 0.55) !important;
             background: rgba(21, 35, 62, 0.86) !important;
-            min-height: 52px !important;
-            padding: 10px 18px !important;
+            min-height: 44px !important;
+            padding: 8px 16px !important;
             transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease !important;
             font-weight: 600 !important;
-            line-height: 1.1 !important;
+            line-height: 1.2 !important;
             text-decoration: none !important;
             box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+            font-size: 0.95rem !important;
         }
         div[data-baseweb="tab-list"] button[role="tab"]:hover {
             transform: none !important;
@@ -761,13 +784,14 @@ def require_authentication():
         }
         .stTextInput input {
             width: 100%;
-            padding: 14px;
+            padding: 12px !important;
             border-radius: 12px !important;
             background: rgba(30, 41, 59, 0.6) !important;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(148, 163, 184, 0.2) !important;
             color: #ffffff !important;
             transition: all 0.18s ease !important;
+            font-size: 0.98rem !important;
         }
         .stTextInput input:focus {
             outline: none !important;
@@ -788,9 +812,10 @@ def require_authentication():
         /* Polished auth form card */
         div[data-testid="stForm"] {
             border: 1px solid rgba(71, 85, 105, 0.55) !important;
-            border-radius: 16px !important;
+            border-radius: 14px !important;
             background: linear-gradient(180deg, rgba(5, 15, 37, 0.72), rgba(2, 10, 28, 0.72)) !important;
-            padding: 14px 10px 8px 10px !important;
+            padding: 12px 8px 6px 8px !important;
+            margin-bottom: 8px !important;
         }
         .stForm [data-testid="stFormSubmitButton"] button,
         .stButton > button {
@@ -1040,16 +1065,64 @@ def require_authentication():
 def inject_premium_cursor():
     """Inject a single high-performance custom cursor system into the parent document."""
     commodity_themes = [
-        {"keys": ["onion", "pyaj"], "icon": "🧅", "color": "152, 108, 255"},
-        {"keys": ["tomato", "tamatar"], "icon": "🍅", "color": "241, 78, 78"},
-        {"keys": ["wheat", "gehun"], "icon": "🌾", "color": "235, 184, 86"},
-        {"keys": ["garlic", "lahsun"], "icon": "🧄", "color": "213, 223, 241"},
-        {"keys": ["potato", "aloo"], "icon": "🥔", "color": "210, 176, 129"},
-        {"keys": ["rice", "chawal", "paddy"], "icon": "🍚", "color": "243, 236, 202"},
-        {"keys": ["maize", "corn", "makka"], "icon": "🌽", "color": "245, 202, 83"},
-        {"keys": ["banana", "kela"], "icon": "🍌", "color": "250, 217, 100"},
-        {"keys": ["apple"], "icon": "🍎", "color": "243, 91, 91"},
-    ]
+    {"keys": ["paddy", "dhan", "rice"], "icon": "🌾", "color": "240, 220, 130"},
+    {"keys": ["wheat", "gehun"], "icon": "🌾", "color": "235, 184, 86"},
+    {"keys": ["potato", "aloo"], "icon": "🥔", "color": "210, 176, 129"},
+    {"keys": ["onion", "pyaj"], "icon": "🧅", "color": "152, 108, 255"},
+    {"keys": ["tomato", "tamatar"], "icon": "🍅", "color": "241, 78, 78"},
+    {"keys": ["brinjal", "baingan", "eggplant"], "icon": "🍆", "color": "126, 87, 194"},
+    {"keys": ["green chilli", "hari mirch"], "icon": "🌶️", "color": "76, 175, 80"},
+    {"keys": ["rice", "chawal"], "icon": "🍚", "color": "243, 236, 202"},
+    {"keys": ["banana", "kela"], "icon": "🍌", "color": "250, 217, 100"},
+    {"keys": ["cauliflower", "phool gobi"], "icon": "🥦", "color": "230, 230, 200"}, # Best fit for brassica
+    {"keys": ["bhindi", "lady finger", "okra"], "icon": "🎋", "color": "139, 195, 74"}, # Better vertical shape
+    {"keys": ["mustard", "sarson"], "icon": "🌼", "color": "255, 235, 59"},
+    {"keys": ["cabbage", "patta gobi"], "icon": "🥬", "color": "102, 187, 106"},
+    {"keys": ["maize", "corn", "makka"], "icon": "🌽", "color": "245, 202, 83"},
+    {"keys": ["bengal gram", "chana"], "icon": "🌰", "color": "205, 133, 63"}, # Nut-like shape
+    {"keys": ["cucumber", "kheera"], "icon": "🥒", "color": "129, 199, 132"},
+    {"keys": ["bottle gourd", "lauki"], "icon": "🥒", "color": "174, 213, 129"},
+    {"keys": ["apple"], "icon": "🍎", "color": "243, 91, 91"},
+    {"keys": ["soyabean", "soya"], "icon": "🫘", "color": "255, 193, 7"}, # Bean emoji
+    {"keys": ["bitter gourd", "karela"], "icon": "🥒", "color": "85, 139, 47"},
+    {"keys": ["pumpkin", "kaddu"], "icon": "🎃", "color": "255, 167, 38"},
+    {"keys": ["carrot", "gajar"], "icon": "🥕", "color": "255, 112, 67"},
+    {"keys": ["arhar", "tur dal"], "icon": "🥣", "color": "255, 152, 0"}, # Represented as a bowl/lentil
+    {"keys": ["cotton"], "icon": "☁️", "color": "245, 245, 245"},
+    {"keys": ["radish", "mooli"], "icon": "🥣", "color": "255, 235, 238"}, # White root context
+    {"keys": ["black gram", "urad"], "icon": "🫘", "color": "66, 66, 66"},
+    {"keys": ["ginger"], "icon": "🫚", "color": "255, 183, 77"},
+    {"keys": ["bajra", "pearl millet"], "icon": "🌾", "color": "200, 170, 120"},
+    {"keys": ["jaggery", "gur"], "icon": "🟫", "color": "141, 110, 99"},
+    {"keys": ["jowar", "sorghum"], "icon": "🌾", "color": "188, 170, 164"},
+    {"keys": ["garlic", "lahsun"], "icon": "🧄", "color": "213, 223, 241"},
+    {"keys": ["moong", "green gram"], "icon": "🫘", "color": "102, 187, 106"},
+    {"keys": ["groundnut", "peanut"], "icon": "🥜", "color": "188, 143, 143"},
+    {"keys": ["peas", "matar"], "icon": "🫛", "color": "76, 175, 80"}, # Pod emoji
+    {"keys": ["spinach", "palak"], "icon": "🥬", "color": "56, 142, 60"},
+    {"keys": ["methi", "fenugreek"], "icon": "🌿", "color": "124, 179, 66"},
+    {"keys": ["lemon", "nimbu"], "icon": "🍋", "color": "255, 235, 59"},
+    {"keys": ["sweet potato", "shakarkandi"], "icon": "🍠", "color": "255, 138, 101"},
+    {"keys": ["coriander leaves", "dhaniya"], "icon": "🌿", "color": "67, 160, 71"},
+    {"keys": ["drumstick", "moringa"], "icon": "🥢", "color": "156, 204, 101"}, # Stick-like
+    {"keys": ["field pea"], "icon": "🫛", "color": "129, 199, 132"},
+    {"keys": ["capsicum", "shimla mirch"], "icon": "🫑", "color": "239, 83, 80"},
+    {"keys": ["grapes"], "icon": "🍇", "color": "171, 71, 188"},
+    {"keys": ["mango", "aam"], "icon": "🥭", "color": "255, 167, 38"},
+    {"keys": ["pomegranate", "anar"], "icon": "🏮", "color": "183, 28, 28"}, # Better pomegranate shape
+    {"keys": ["watermelon", "tarbooj"], "icon": "🍉", "color": "67, 160, 71"},
+    {"keys": ["orange", "santra"], "icon": "🍊", "color": "255, 152, 0"},
+    {"keys": ["guava", "amrood"], "icon": "🍏", "color": "156, 204, 101"},
+    {"keys": ["papaya"], "icon": "🍈", "color": "255, 183, 77"},
+    {"keys": ["jackfruit"], "icon": "🍈", "color": "255, 202, 40"},
+    {"keys": ["coconut", "nariyal"], "icon": "🥥", "color": "141, 110, 99"},
+    {"keys": ["sesame", "til"], "icon": "🧂", "color": "255, 248, 225"}, # Shaker for tiny seeds
+    {"keys": ["sugarcane", "ganna"], "icon": "🎋", "color": "139, 195, 74"},
+    {"keys": ["turmeric", "haldi"], "icon": "🫚", "color": "255, 193, 7"}, # Root emoji
+    {"keys": ["dry chilli"], "icon": "🌶️", "color": "198, 40, 40"},
+    {"keys": ["coriander seed"], "icon": "🧂", "color": "160, 124, 90"},
+    {"keys": ["sunflower"], "icon": "🌻", "color": "255, 235, 59"},
+]
     payload = json.dumps(
         {"themes": commodity_themes, "fallback": {"icon": "●", "color": "176, 189, 212"}}
     )
@@ -1363,10 +1436,46 @@ def set_cursor_commodity(name):
         width=0,
     )
 
-
 # --- 2. SETTINGS & UI STYLING ---
 st.set_page_config(page_title="MandiFlow Intelligence", layout="wide", page_icon="🌾")
 inject_premium_cursor()
+
+# --- 2. PASTE THE CSS FIX HERE ---
+st.markdown("""
+    <style>
+        /* Push the native Streamlit toolbar (Deploy, Menu) down */
+        header[data-testid="stHeader"] {
+            top: 65px !important;
+            background-color: transparent !important;
+        }
+
+        /* Adjust the main content area so it starts below your navbar */
+        .main .block-container {
+            padding-top: 100px !important;
+        }
+
+        /* Ensure your custom navbar stays at the absolute top */
+        .mf-navbar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            z-index: 999999;
+            background-color: #0e1117;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 0 20px;
+        }
+        
+        /* Optional: Hide the default top padding of the app */
+        [data-testid="stAppViewBlockContainer"] {
+            padding-top: 1rem;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# --- 3. YOUR NAVBAR CODE FOLLOWS ---
+# (The st.columns block we worked on earlier)
 
 st.markdown("""
     <style>
@@ -1386,7 +1495,7 @@ st.markdown("""
         min-height: 0 !important;
         background: transparent !important;
         border: 0 !important;
-        margin: 0 !important;
+        margin: -32px !important;
         padding: 0 !important;
     }
     [data-testid="stHeaderActionElements"],
@@ -1410,8 +1519,8 @@ st.markdown("""
         margin-top: 0 !important;
     }
     .block-container {
-        padding-top: 0 !important;
-        margin-top: 0 !important;
+        padding-top: 0px !important;
+        margin-top: 0;
     }
     #mf-navbar-anchor { height: 0 !important; margin: 0 !important; padding: 0 !important; }
     
@@ -1600,7 +1709,10 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-nav_commodity_col, nav_search_col, nav_user_col = st.columns([2.5, 3.5, 4.0], gap="small")
+# 1. Adjust column ratios to give the user email more breathing room
+# [Commodity: 2.0, Search: 4.0, User/Logout: 4.0]
+nav_commodity_col, nav_search_col, nav_user_col = st.columns([2.0, 4.0, 4.0], gap="small")
+
 with nav_commodity_col:
     selected_display = st.selectbox(
         "Commodity",
@@ -1608,27 +1720,65 @@ with nav_commodity_col:
         key="nav_commodity_select",
         label_visibility="collapsed",
     )
+    # Clean the string (Handles the star/emoji edge cases you have)
     commodity = selected_display.replace(STAR_PREFIX, "").replace("⭐ ", "").replace("â­ ", "").replace("? ", "").strip()
     set_cursor_commodity(commodity)
+
+# 1. Define the callback function BEFORE the columns
+def clear_search_callback():
+    st.session_state["nav_mandi_search"] = ""
+
 with nav_search_col:
-    map_search = st.text_input(
-        "Search",
-        placeholder="Search state or mandi...",
-        key="nav_mandi_search",
-        label_visibility="collapsed",
-    )
+    # Use "small" to avoid the previous gap error
+    search_input_col, clear_btn_col = st.columns([0.85, 0.15], gap="small") 
+    
+    with search_input_col:
+        # The widget is tied to the key "nav_mandi_search"
+        map_search = st.text_input(
+            "Search", 
+            placeholder="Search state or mandi...", 
+            key="nav_mandi_search", 
+            label_visibility="collapsed"
+        )
+    
+    with clear_btn_col:
+        # Check if there is text to clear
+        if st.session_state.get("nav_mandi_search"):
+            # 2. Use 'on_click' to trigger the function properly
+            st.button(
+                "✖", 
+                key="clear_search_btn", 
+                on_click=clear_search_callback,
+                help="Clear Search"
+            )
+
 with nav_user_col:
     safe_email = html.escape(str(auth_user.get("email", "unknown")))
-    user_text_col, logout_col = st.columns([0.67, 0.33], gap="small")
+    
+    # 3. Fix Visibility: Increase user_text_col ratio and add CSS flexibility
+    # [Email: 0.75, Logout: 0.25]
+    user_text_col, logout_col = st.columns([0.75, 0.25], gap="small")
+    
     with user_text_col:
-        st.markdown(f'<div class="mf-nav-user" title="{safe_email}">{safe_email}</div>', unsafe_allow_html=True)
+        # Use white-space: nowrap to ensure the email stays on one line
+        # but is visible across the full column width.
+        st.markdown(
+            f'''
+            <div class="mf-nav-user" title="{safe_email}" 
+                 style="white-space: nowrap; overflow: visible; text-overflow: clip; width: 100%;">
+                {safe_email}
+            </div>
+            ''', 
+            unsafe_allow_html=True
+        )
+        
     with logout_col:
         if st.button("Logout", key="top_nav_logout", use_container_width=True, type="secondary"):
             logout_user()
             st.rerun()
 
 with st.sidebar:
-
+    # --- 1. BRANDING HEADER ---
     st.markdown("""
         <div style='text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);'>
             <h1 style='margin-bottom: 5px; color: #2ecc71;'>🌾 MandiFlow</h1>
@@ -1636,24 +1786,32 @@ with st.sidebar:
         </div>
     """, unsafe_allow_html=True)
     
-    st.header("🕹️ Controls")    # Commodity selector moved to top navbar.
+    st.header("🕹️ Controls")
     sidebar_loading_slot = st.empty()
 
-    # 3.2 Network Status Widget
+    # --- 2. NETWORK STATUS WIDGET ---
     st.markdown("<br>", unsafe_allow_html=True)
     sidebar_status_slot = st.empty()
-    sidebar_status_slot.markdown(
-        """
-        <div style="padding: 15px; border-radius: 10px; border: 1px solid #3e4250; background: rgba(0,0,0,0.2); margin-bottom: 15px;">
-            <div class="mf-skeleton" style="height: 20px; width: 62%; margin-bottom: 12px;"></div>
-            <div class="mf-skeleton" style="height: 14px; width: 100%;"></div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    
+    # Check if we have live data to show actual status, else show skeleton
+    if 'mandi_data' in st.session_state and not st.session_state.mandi_data.empty:
+        last_update = st.session_state.get('last_update', 'Unknown')
+        sidebar_status_slot.markdown(f"""
+            <div style="padding: 15px; border-radius: 10px; border: 1px solid #2ecc71; background: rgba(46, 204, 113, 0.1); margin-bottom: 15px;">
+                <div style="color: #2ecc71; font-weight: bold; font-size: 0.85rem;">● SYSTEM ONLINE</div>
+                <div style="color: #888; font-size: 0.75rem;">Last Sync: {last_update}</div>
+            </div>
+        """, unsafe_allow_html=True)
+    else:
+        sidebar_status_slot.markdown("""
+            <div style="padding: 15px; border-radius: 10px; border: 1px solid #3e4250; background: rgba(0,0,0,0.2); margin-bottom: 15px;">
+                <div class="mf-skeleton" style="height: 20px; width: 62%; margin-bottom: 12px;"></div>
+                <div class="mf-skeleton" style="height: 14px; width: 100%;"></div>
+            </div>
+        """, unsafe_allow_html=True)
     
     if st.button("🔄 Sync Network", use_container_width=True, type="secondary"):
-        fetch_live_data_cached.clear()
+        # fetch_live_data_cached.clear() # Uncomment if using this cache function
         for key in ["mandi_data", "is_live", "last_comm", "last_update"]:
             if key in st.session_state:
                 del st.session_state[key]
@@ -1661,30 +1819,39 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # 3.3 Simulation & Shock Controls
-    st.header("⚡ Phase II Forecast Engine")
-    st.caption("Use structured inputs to build a deterministic shock prompt for the GCN-LSTM.")
+    # --- 3. PHASE II FORECAST ENGINE (GCN-LSTM) ---
+    st.header("⚡ Forecast Engine")
+    shock_context_text = ""
+    
+
+    # 3.1 Target Commodity (Triggers Brain Load)
     forecast_commodity = st.selectbox(
         "1. Target Commodity",
         options=["ONION", "WHEAT", "GARLIC", "POTATO"],
         index=0,
+        key="forecast_comm_select"
     )
+
+    # 3.2 Dynamic Graph Index Loading
+    try:
+        # Pulls the 1,088 node list directly from your trained adjacency index
+        res = get_resources(forecast_commodity)
+        available_markets = sorted(res['market_names'])
+    except Exception as e:
+        available_markets = ["Lasalgaon", "Azadpur", "Mandsaur", "Nashik"] # Fallback
+        st.error(f"⚠️ Graph Index Error: {e}")
+
+    # 3.3 Searchable Origin Market (Replacing hardcoded list)
     origin_market = st.selectbox(
         "2. Origin Market (Epicenter)",
-        options=[
-            "Lasalgaon",
-            "Azadpur",
-            "Mandsaur",
-            "Pune",
-            "Mumbai",
-            "Indore",
-            "Nashik",
-            "Bangalore",
-            "Kolkata",
-            "Ahmedabad",
-        ],
-        index=0,
+        options=available_markets,
+        index=None, # Clean start for search
+        placeholder="Type to search 1,000+ mandis...",
+        help="This list is synced with the Spatio-Temporal Matrix IDs.",
+        key="origin_mandi_select"
     )
+
+    # 3.4 Shock Event Selection
     shock_event = st.selectbox(
         "3. Select Shock Event",
         options=[
@@ -1696,22 +1863,31 @@ with st.sidebar:
             "Policy Change / Government Action",
         ],
         index=0,
+        key="shock_event_select"
     )
+
+    # 3.5 Context Inputs
     policy_or_news_text = ""
     if shock_event == "Policy Change / Government Action":
-        policy_or_news_text = st.text_area("Paste Policy Details or News", height=100)
-    uploaded_doc = st.file_uploader("Upload Policy Doc (PDF/TXT)", type=["pdf", "txt", "docx"])
+        policy_or_news_text = st.text_area("Paste Policy Details or News", height=100, key="policy_text")
     
-    if shock_event == "Policy Change / Government Action":
-        shock_context_text = policy_or_news_text.strip()
+    uploaded_doc = st.file_uploader("Upload Policy Doc (PDF/TXT)", type=["pdf", "txt", "docx"], key="sidebar_uploader")
+    
+    # 3.6 Prediction Trigger
+    if origin_market:
+        shock_context_text = policy_or_news_text.strip() if shock_event == "Policy Change / Government Action" else f"{origin_market} {shock_event}"
+        predict_btn = st.button("🚀 Predict Impact (1-4 Days)", use_container_width=True, type="primary")
     else:
-        shock_context_text = f"{origin_market} {shock_event}"
-    
-    predict_btn = st.button("🚀 Predict Impact (1-7 Days)", use_container_width=True, type="primary")
+        st.warning("📍 Select a Market to unlock simulation.")
+        predict_btn = False
+
+    # --- 4. FOOTER ---
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("""
+    st.markdown(f"""
         <div style='text-align: center; color: #666; font-size: 0.75rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;'>
-            MandiFlow v1.0<br>Spatio-Temporal GCN Engine
+            MandiFlow v1.0<br>
+            Current Mode: <b>{forecast_commodity} Brain</b><br>
+            Spatio-Temporal GCN Engine
         </div>
     """, unsafe_allow_html=True)
 
@@ -1951,10 +2127,10 @@ if 'predict_btn' in locals() and predict_btn:
         from simulator import simulate_shock, NewsAnalyzer
         from document_processor import DocumentProcessor
         import altair as alt
+        from datetime import datetime, timedelta
 
-        # Dynamically inject the API key into the analyzer before simulation
+        # 1. Setup Analyzer & Docs
         analyzer = NewsAnalyzer(api_key=st.session_state.get('GEMINI_API_KEY', ''))
-        
         doc_text = ""
         if uploaded_doc is not None:
             processor = DocumentProcessor()
@@ -1962,6 +2138,7 @@ if 'predict_btn' in locals() and predict_btn:
             if isinstance(doc_chunks, list):
                 doc_text = " ".join(doc_chunks)
 
+        # 2. Build Synthetic Context
         if shock_event == "Policy Change / Government Action":
             if not policy_or_news_text.strip():
                 st.error("Paste Policy Details or News is required for policy-driven shocks.")
@@ -1970,56 +2147,86 @@ if 'predict_btn' in locals() and predict_btn:
         else:
             synthetic_news_text = f"The {origin_market} market is experiencing {shock_event}."
             
+        # 3. RUN SIMULATION
         result = simulate_shock(synthetic_news_text, doc_text, commodity=forecast_commodity)
-        
-        with st.expander("🔍 Extracted Shock Features (JSON)"):
-            st.json(result["features"])
         
         if result.get("resolution_error"):
             st.error(f"Node not found in historical data: {result['resolution_error']}")
             st.stop()
+
+        # 4. DATE LOGIC: Generate actual dates for the X-axis
+        today = datetime.now()
+        dates = [(today + timedelta(days=i)).strftime('%b %d') for i in range(5)] # Today + 4 days
+
+        with st.expander("🔍 Extracted Shock Features (JSON)"):
+            st.json(result["features"])
         
         st.success("Simulation Complete")
         cols = st.columns(2)
         
-        # 1. Target node chart
+        # --- CHART 1: ORIGIN IMPACT ---
         with cols[0]:
             st.markdown(f"**Origin Impact:** {result['origin_name']}")
-            days = [1, 3, 5, 7]
-            df_origin = pd.DataFrame({"Days": days, "Predicted Price (₹/q)": result['origin_forecast']})
-            chart_origin = alt.Chart(df_origin).mark_line(point=True, color="#ff4b4b").encode(
-                x=alt.X("Days:O", title="Days Ahead"),
-                y=alt.Y("Predicted Price (₹/q):Q", scale=alt.Scale(zero=False), title="Modal Price")
-            ).properties(height=280)
+            
+            # Anchor to base_price (Day 0)
+            base_p = result.get('base_price', result['origin_forecast'][0])
+            prices_origin = [base_p] + result['origin_forecast']
+            
+            df_origin = pd.DataFrame({
+                "Date": dates,
+                "Price": prices_origin,
+                "Type": ["Actual"] + ["Forecast"] * 4
+            })
+            
+            # Altair Chart with actual dates and dashed forecast line
+            chart_origin = alt.Chart(df_origin).mark_line(point=True).encode(
+                x=alt.X("Date:N", sort=None, title="Timeline"),
+                y=alt.Y("Price:Q", scale=alt.Scale(zero=False), title="Price (₹/q)"),
+                color=alt.value("#ff4b4b"),
+                strokeDash=alt.condition(
+                    alt.datum.Type == 'Forecast',
+                    alt.value([5, 5]),
+                    alt.value([0])
+                )
+            ).properties(height=300)
+            
             st.altair_chart(chart_origin, use_container_width=True)
             
-        # 2. Ripples chart
+        # --- CHART 2: RIPPLE EFFECT ---
         with cols[1]:
             if len(result['served_areas']) > 0:
-                # Combine all served area forecasts into one dataframe for a multi-line chart
                 frames = []
-                days = [1, 3, 5, 7]
                 for served in result['served_areas']:
+                    # Neighbors also start from their own base_price
+                    n_base = served.get('base_price', served['forecast'][0])
+                    prices_served = [n_base] + served['forecast']
+                    
                     df_temp = pd.DataFrame({
-                        "Days": days, 
-                        "Predicted Price (₹/q)": served['forecast'],
-                        "Mandi": served['mandi']
+                        "Date": dates, 
+                        "Price": prices_served,
+                        "Mandi": served['mandi'],
+                        "Type": ["Actual"] + ["Forecast"] * 4
                     })
                     frames.append(df_temp)
                 
-                df_served = pd.concat(frames)
-                st.markdown(f"**Ripple Effect (Served Areas):** {len(frames)} connected nodes")
+                df_ripple = pd.concat(frames)
+                st.markdown(f"**Ripple Effect:** {len(frames)} connected nodes")
                 
-                chart_served = alt.Chart(df_served).mark_line(point=True).encode(
-                    x=alt.X("Days:O", title="Days Ahead"),
-                    y=alt.Y("Predicted Price (₹/q):Q", scale=alt.Scale(zero=False), title="Modal Price"),
-                    color=alt.Color("Mandi:N", legend=alt.Legend(title="Served Area", orient="bottom"))
-                ).properties(height=280)
+                chart_ripple = alt.Chart(df_ripple).mark_line(point=True).encode(
+                    x=alt.X("Date:N", sort=None, title="Timeline"),
+                    y=alt.Y("Price:Q", scale=alt.Scale(zero=False), title="Price (₹/q)"),
+                    color=alt.Color("Mandi:N", legend=alt.Legend(title="Mandi", orient="bottom")),
+                    strokeDash=alt.condition(
+                        alt.datum.Type == 'Forecast',
+                        alt.value([5, 5]),
+                        alt.value([0])
+                    )
+                ).properties(height=300)
                 
-                # 🚨 THE FIX: Streamlit's new responsive width syntax
-                st.altair_chart(chart_served, width="stretch")
+                st.altair_chart(chart_ripple, use_container_width=True)
             else:
-                st.info("No highly correlated 'Served Areas' found in the dataset for this origin.")
+                st.info("No highly correlated 'Served Areas' found for this origin.")
+
     st.markdown("---")
 
 # --- 5. DATA TABLE SEARCH ---
