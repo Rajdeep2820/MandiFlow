@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import folium
 import difflib
@@ -9,6 +10,7 @@ import os
 import json
 import secrets
 import html
+import re
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -281,13 +283,103 @@ def parse_firebase_error(error_code):
         "OPERATION_NOT_ALLOWED": "Email/password sign-in is not enabled in Firebase.",
         "TOO_MANY_ATTEMPTS_TRY_LATER": "Too many attempts. Please try again later.",
         "EMAIL_NOT_FOUND": "No account found with this email.",
+        "USER_NOT_FOUND": "No account found with this email.",
         "INVALID_PASSWORD": "Incorrect password.",
         "USER_DISABLED": "This account has been disabled by an administrator.",
         "INVALID_EMAIL": "Please enter a valid email address.",
+        "MISSING_EMAIL": "Please enter your email address.",
+        "RESET_PASSWORD_EXCEED_LIMIT": "Too many reset requests. Please try again later.",
         "WEAK_PASSWORD : Password should be at least 6 characters": "Password must be at least 6 characters long.",
         "WEAK_PASSWORD": "Password must be at least 6 characters long.",
     }
     return message_map.get(error_code, f"Authentication failed: {error_code}")
+
+
+def is_valid_email(email):
+    """Validate basic email format before sending Firebase request."""
+    if not email:
+        return False
+    return bool(re.match(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", email))
+
+
+def send_password_reset_email(email):
+    """
+    Send Firebase password reset email via REST API using requests.
+    Returns (success: bool, message: str).
+    """
+    api_key = get_firebase_api_key()
+    if not api_key:
+        return False, "Firebase API key is missing."
+
+    if not is_valid_email(email):
+        return False, "Please enter a valid email address."
+
+    url = f"https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key={api_key}"
+    payload = {"requestType": "PASSWORD_RESET", "email": email.strip()}
+
+    try:
+        response = _req.post(url, json=payload, timeout=20)
+        data = response.json()
+    except _req.exceptions.Timeout:
+        return False, "Request timed out. Please try again."
+    except _req.exceptions.ConnectionError:
+        return False, "Unable to reach Firebase. Check your internet connection."
+    except _req.exceptions.RequestException:
+        return False, "Unable to send reset email right now. Please try again."
+    except ValueError:
+        return False, "Firebase returned an invalid response."
+
+    if response.status_code >= 400:
+        error_code = data.get("error", {}).get("message", "UNKNOWN_ERROR")
+        return False, parse_firebase_error(error_code)
+
+    return True, "Password reset link sent. Please check your inbox (and spam folder)."
+
+
+def render_forgot_password_page():
+    """Render a focused forgot-password screen and handle reset flow."""
+    st.markdown("### Reset your password")
+    st.caption("Enter your account email and we will send you a reset link.")
+
+    # Prefill with login email if user already typed it on the sign-in tab.
+    default_email = st.session_state.get("login_email", "")
+    if "forgot_password_email" not in st.session_state:
+        st.session_state.forgot_password_email = default_email
+
+    email = st.text_input(
+        "Email",
+        key="forgot_password_email",
+        placeholder="you@example.com",
+        help="Use the same email that you registered with.",
+    )
+    use_spinner = st.checkbox("Show loading spinner while sending", value=True)
+
+    col_send, col_back = st.columns([2, 1])
+
+    with col_send:
+        if st.button("Send Reset Link", use_container_width=True):
+            cleaned_email = email.strip()
+            if not cleaned_email:
+                st.warning("Please enter your email address.")
+            elif not is_valid_email(cleaned_email):
+                st.error("Please enter a valid email address.")
+            else:
+                if use_spinner:
+                    with st.spinner("Sending reset link..."):
+                        success, message = send_password_reset_email(cleaned_email)
+                else:
+                    success, message = send_password_reset_email(cleaned_email)
+
+                if success:
+                    st.success(message)
+                    st.info("After resetting your password, return to Sign In and continue.")
+                else:
+                    st.error(message)
+
+    with col_back:
+        if st.button("Back to Sign In", use_container_width=True):
+            st.session_state.auth_view = "login"
+            st.rerun()
 
 
 def firebase_auth_request(endpoint, payload):
@@ -445,6 +537,7 @@ def build_auth_user(auth_data, fallback_email=""):
 def save_authenticated_user(auth_data, fallback_email=""):
     user = build_auth_user(auth_data, fallback_email=fallback_email)
     st.session_state.auth_user = user
+    st.session_state.auth_view = "login"
     if user.get("refresh_token"):
         set_query_param("rt", user["refresh_token"])
     return user
@@ -475,7 +568,16 @@ def restore_auth_session_from_query():
 
 
 def logout_user():
-    for key in ["auth_user", "google_oauth_state", "mandi_data", "is_live", "last_comm", "last_update"]:
+    for key in [
+        "auth_user",
+        "google_oauth_state",
+        "auth_view",
+        "forgot_password_email",
+        "mandi_data",
+        "is_live",
+        "last_comm",
+        "last_update",
+    ]:
         if key in st.session_state:
             del st.session_state[key]
     clear_auth_query_params()
@@ -493,11 +595,43 @@ def require_authentication():
         """
         <style>
         [data-testid="stAppViewContainer"] {
-            background: linear-gradient(-45deg, #01020a, #020617, #040b1d, #07122b);
-            background-size: 400% 400%;
-            animation: gradientMove 12s ease infinite;
+            background: linear-gradient(-45deg, #020f33, #041b4d, #020a1f, #000000);
+            background-size: 280% 280%;
+            animation: gradientMove 4.8s linear infinite;
             position: relative;
             overflow: hidden;
+        }
+        [data-testid="stAppViewContainer"]::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background:
+                radial-gradient(circle at 14% 18%, rgba(20, 76, 178, 0.34), transparent 36%),
+                radial-gradient(circle at 84% 22%, rgba(13, 53, 138, 0.26), transparent 34%),
+                radial-gradient(circle at 18% 84%, rgba(7, 36, 98, 0.22), transparent 38%),
+                radial-gradient(circle at 78% 78%, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.94) 64%),
+                radial-gradient(circle at 50% 50%, rgba(9, 34, 90, 0.20), transparent 48%),
+                repeating-linear-gradient(
+                    135deg,
+                    rgba(255, 255, 255, 0.018) 0px,
+                    rgba(255, 255, 255, 0.018) 2px,
+                    transparent 2px,
+                    transparent 20px
+                );
+            mix-blend-mode: screen;
+        }
+        [data-testid="stAppViewContainer"]::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background:
+                radial-gradient(circle at 50% 46%, rgba(35, 112, 255, 0.10), transparent 34%),
+                radial-gradient(circle at 50% 46%, rgba(0, 0, 0, 0.00), rgba(0, 0, 0, 0.55) 72%);
+            animation: meshPulse 3.6s ease-in-out infinite alternate;
         }
         [data-testid="stHeader"],
         [data-testid="stDecoration"] {
@@ -519,11 +653,11 @@ def require_authentication():
             gap: 16px;
             padding: 28px 32px 34px 32px !important;
             border-radius: 20px;
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(34, 211, 238, 0.3);
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+            background: linear-gradient(180deg, rgba(6, 16, 40, 0.78), rgba(2, 7, 20, 0.92));
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(34, 211, 238, 0.22);
+            box-shadow: 0 18px 44px rgba(0, 0, 0, 0.72);
             margin: 0 auto !important;
         }
         .auth-bg-blob {
@@ -531,27 +665,27 @@ def require_authentication():
             width: 300px;
             height: 300px;
             border-radius: 999px;
-            filter: blur(120px);
+            filter: blur(95px);
             z-index: 0;
             pointer-events: none;
-            animation: blobFloat 10s infinite alternate ease-in-out;
+            animation: blobFloat 5.2s infinite alternate ease-in-out;
         }
         .auth-bg-blob.blob-a {
             top: -80px;
             left: -100px;
-            background: rgba(30, 58, 138, 0.28);
+            background: rgba(7, 35, 94, 0.20);
         }
         .auth-bg-blob.blob-b {
             right: -80px;
             top: 25%;
-            background: rgba(37, 99, 235, 0.18);
-            animation-duration: 12s;
+            background: rgba(4, 24, 74, 0.18);
+            animation-duration: 6s;
         }
         .auth-bg-blob.blob-c {
             bottom: -110px;
             left: 40%;
-            background: rgba(15, 23, 42, 0.4);
-            animation-duration: 14s;
+            background: rgba(0, 0, 0, 0.64);
+            animation-duration: 6.5s;
         }
         .auth-title {
             margin: 0;
@@ -572,28 +706,45 @@ def require_authentication():
             margin-right: auto;
         }
         div[data-baseweb="tab-list"] {
-            gap: 10px;
-            margin: 8px 0 16px 0;
+            gap: 12px;
+            margin: 10px 0 18px 0;
+            padding: 2px 0;
         }
         div[data-baseweb="tab-list"] button[role="tab"] {
-            border-radius: 12px !important;
-            color: #ffffff !important;
+            border-radius: 16px !important;
+            color: #dbe7ff !important;
             border: 1px solid rgba(71, 85, 105, 0.55) !important;
-            background: rgba(30, 41, 59, 0.92) !important;
-            transition: all 0.3s ease !important;
+            background: rgba(21, 35, 62, 0.86) !important;
+            min-height: 52px !important;
+            padding: 10px 18px !important;
+            transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease !important;
             font-weight: 600 !important;
+            line-height: 1.1 !important;
+            text-decoration: none !important;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
         }
         div[data-baseweb="tab-list"] button[role="tab"]:hover {
-            transform: scale(1.05);
+            transform: none !important;
             box-shadow: none !important;
             filter: none;
-            background: rgba(15, 23, 42, 0.82) !important;
+            color: #ffffff !important;
+            border-color: rgba(56, 189, 248, 0.45) !important;
+            background: rgba(17, 30, 55, 0.95) !important;
         }
         div[data-baseweb="tab-list"] button[aria-selected="true"] {
-            background: rgba(30, 41, 59, 0.98) !important;
-            border: 1px solid rgba(56, 189, 248, 0.5) !important;
+            color: #ffffff !important;
+            background: rgba(25, 45, 78, 0.96) !important;
+            border: 1px solid rgba(56, 189, 248, 0.95) !important;
             filter: none;
-            box-shadow: 0 0 8px rgba(14, 165, 233, 0.2);
+            box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.22), 0 4px 14px rgba(2, 132, 199, 0.22);
+            text-decoration: none !important;
+        }
+        div[data-baseweb="tab-highlight"] {
+            display: none !important;
+        }
+        div[data-baseweb="tab-list"] button[role="tab"]::before,
+        div[data-baseweb="tab-list"] button[role="tab"]::after {
+            display: none !important;
         }
         .stTextInput > label p {
             color: #cbd5e1 !important;
@@ -616,12 +767,30 @@ def require_authentication():
             backdrop-filter: blur(10px);
             border: 1px solid rgba(148, 163, 184, 0.2) !important;
             color: #ffffff !important;
-            transition: all 0.3s ease !important;
+            transition: all 0.18s ease !important;
         }
         .stTextInput input:focus {
             outline: none !important;
             border-color: #22d3ee !important;
             box-shadow: 0 0 10px #22d3ee !important;
+        }
+        /* Hide Streamlit form hint: "Press Enter to submit form" */
+        [data-testid="InputInstructions"] {
+            display: none !important;
+        }
+        /* Hide browser-native password reveal so only one eye toggle is visible */
+        .stTextInput input[type="password"]::-ms-reveal,
+        .stTextInput input[type="password"]::-ms-clear {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+        /* Polished auth form card */
+        div[data-testid="stForm"] {
+            border: 1px solid rgba(71, 85, 105, 0.55) !important;
+            border-radius: 16px !important;
+            background: linear-gradient(180deg, rgba(5, 15, 37, 0.72), rgba(2, 10, 28, 0.72)) !important;
+            padding: 14px 10px 8px 10px !important;
         }
         .stForm [data-testid="stFormSubmitButton"] button,
         .stButton > button {
@@ -630,7 +799,7 @@ def require_authentication():
             border-radius: 12px !important;
             padding: 14px !important;
             border: none !important;
-            transition: all 0.3s ease !important;
+            transition: all 0.18s ease !important;
         }
         .stForm [data-testid="stFormSubmitButton"] button:hover,
         .stButton > button:hover {
@@ -641,7 +810,7 @@ def require_authentication():
         .divider {
             text-align: center;
             color: #94a3b8;
-            margin: 20px 0;
+            margin: 16px 0 14px 0;
         }
         .google-btn {
             display: flex;
@@ -655,7 +824,7 @@ def require_authentication():
             padding: 12px 14px;
             text-decoration: none !important;
             font-weight: 600;
-            transition: all 0.3s ease;
+            transition: all 0.18s ease;
         }
         .google-btn img {
             width: 18px;
@@ -671,10 +840,42 @@ def require_authentication():
             font-size: 0.95rem;
             line-height: 1.45;
         }
+        /* Small red link-style forgot-password action */
+        .st-key-open_forgot_password {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 2px !important;
+            margin-bottom: 6px !important;
+        }
+        .st-key-open_forgot_password button {
+            background: transparent !important;
+            border: none !important;
+            color: #fb7185 !important;
+            padding: 0 !important;
+            min-height: auto !important;
+            height: auto !important;
+            width: auto !important;
+            font-size: 0.86rem !important;
+            font-weight: 600 !important;
+            text-decoration: none !important;
+            letter-spacing: 0.01em;
+            box-shadow: none !important;
+        }
+        .st-key-open_forgot_password button:hover {
+            color: #fecdd3 !important;
+            transform: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            text-decoration: underline !important;
+        }
         @keyframes gradientMove {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
+        }
+        @keyframes meshPulse {
+            0% { opacity: 0.7; }
+            100% { opacity: 1; }
         }
         @keyframes blobFloat {
             from { transform: translate3d(0, 0, 0) scale(1); }
@@ -750,6 +951,14 @@ def require_authentication():
         google_cfg["client_id"] and google_cfg["client_secret"] and google_cfg["redirect_uri"]
     )
 
+    # Simple auth-page navigation state: "login" (default) or "forgot_password".
+    if "auth_view" not in st.session_state:
+        st.session_state.auth_view = "login"
+
+    if st.session_state.auth_view == "forgot_password":
+        render_forgot_password_page()
+        st.stop()
+
     login_tab, signup_tab = st.tabs(["Sign In", "Create Account"])
 
     with login_tab:
@@ -769,6 +978,12 @@ def require_authentication():
                     save_authenticated_user(auth_data, fallback_email=login_email.strip())
                     st.success("Login successful.")
                     st.rerun()
+
+        fp_col_left, fp_col_right = st.columns([3, 1])
+        with fp_col_right:
+            if st.button("Forgot Password?", key="open_forgot_password", use_container_width=False):
+                st.session_state.auth_view = "forgot_password"
+                st.rerun()
 
         st.markdown('<div class="divider">Or</div>', unsafe_allow_html=True)
         if google_ready:
@@ -820,8 +1035,338 @@ def require_authentication():
 
     st.stop()
 
+
+# --- Premium Cursor Bridge ---
+def inject_premium_cursor():
+    """Inject a single high-performance custom cursor system into the parent document."""
+    commodity_themes = [
+        {"keys": ["onion", "pyaj"], "icon": "🧅", "color": "152, 108, 255"},
+        {"keys": ["tomato", "tamatar"], "icon": "🍅", "color": "241, 78, 78"},
+        {"keys": ["wheat", "gehun"], "icon": "🌾", "color": "235, 184, 86"},
+        {"keys": ["garlic", "lahsun"], "icon": "🧄", "color": "213, 223, 241"},
+        {"keys": ["potato", "aloo"], "icon": "🥔", "color": "210, 176, 129"},
+        {"keys": ["rice", "chawal", "paddy"], "icon": "🍚", "color": "243, 236, 202"},
+        {"keys": ["maize", "corn", "makka"], "icon": "🌽", "color": "245, 202, 83"},
+        {"keys": ["banana", "kela"], "icon": "🍌", "color": "250, 217, 100"},
+        {"keys": ["apple"], "icon": "🍎", "color": "243, 91, 91"},
+    ]
+    payload = json.dumps(
+        {"themes": commodity_themes, "fallback": {"icon": "●", "color": "176, 189, 212"}}
+    )
+    components.html(
+        f"""
+        <script>
+        (() => {{
+            const parentWin = window.parent;
+            const doc = parentWin.document;
+            const payload = {payload};
+            if (!doc || parentWin.__mfPremiumCursorBooted) {{
+                if (parentWin.__mfPremiumCursor && typeof parentWin.__mfPremiumCursor.refresh === "function") {{
+                    parentWin.__mfPremiumCursor.refresh();
+                }}
+                return;
+            }}
+            parentWin.__mfPremiumCursorBooted = true;
+
+            const lerp = (a, b, t) => a + (b - a) * t;
+            const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+            const normalize = (value) =>
+                String(value || "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\\s+/g, " ").trim();
+
+            const styleId = "mf-premium-cursor-style";
+            if (!doc.getElementById(styleId)) {{
+                const style = doc.createElement("style");
+                style.id = styleId;
+                style.textContent = `
+                    html, body, *, *::before, *::after {{ cursor: none !important; }}
+                    .mf-cursor-root {{
+                        position: fixed; inset: 0; z-index: 2147483646; pointer-events: none; contain: strict;
+                    }}
+                    .mf-cursor-head, .mf-cursor-trail, .mf-cursor-echo {{
+                        position: fixed; left: 0; top: 0;
+                        transform: translate3d(-9999px, -9999px, 0);
+                        will-change: transform, opacity; pointer-events: none; user-select: none;
+                    }}
+                    .mf-cursor-head {{
+                        width: 30px; height: 30px; margin-left: -15px; margin-top: -15px; border-radius: 999px;
+                        border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(255, 255, 255, 0.08);
+                        box-shadow: 0 0 0 1px rgba(var(--mf-cursor-rgb, 152, 108, 255), 0.18), 0 0 20px rgba(var(--mf-cursor-rgb, 152, 108, 255), 0.24);
+                        display: flex; align-items: center; justify-content: center;
+                        transform-origin: center; backface-visibility: hidden;
+                    }}
+                    .mf-cursor-icon {{ font-size: 18px; line-height: 1; transform: translateZ(0); }}
+                    .mf-cursor-trail {{
+                        width: 18px; height: 18px; margin-left: -9px; margin-top: -9px;
+                        display: flex; align-items: center; justify-content: center; opacity: 0;
+                    }}
+                    .mf-cursor-trail > span {{ font-size: 13px; line-height: 1; opacity: 0.85; }}
+                    .mf-cursor-echo {{
+                        width: 14px; height: 14px; margin-left: -7px; margin-top: -7px;
+                        display: flex; align-items: center; justify-content: center; opacity: 0;
+                    }}
+                    .mf-cursor-echo > span {{ font-size: 12px; line-height: 1; }}
+                    @media (pointer: coarse) {{ .mf-cursor-root {{ display: none !important; }} }}
+                `;
+                doc.head.appendChild(style);
+            }}
+
+            let root = doc.getElementById("mf-cursor-root");
+            if (!root) {{
+                root = doc.createElement("div");
+                root.id = "mf-cursor-root";
+                root.className = "mf-cursor-root";
+                doc.body.appendChild(root);
+            }}
+            let head = root.querySelector(".mf-cursor-head");
+            if (!head) {{
+                head = doc.createElement("div");
+                head.className = "mf-cursor-head";
+                const icon = doc.createElement("span");
+                icon.className = "mf-cursor-icon";
+                icon.textContent = "🧅";
+                head.appendChild(icon);
+                root.appendChild(head);
+            }}
+            const iconNode = head.querySelector(".mf-cursor-icon");
+
+            const trailCount = 8;
+            const echoCount = 10;
+            const trails = [];
+            const echoes = [];
+            for (let i = 0; i < trailCount; i += 1) {{
+                let node = root.querySelector(`.mf-cursor-trail[data-i="${{i}}"]`);
+                if (!node) {{
+                    node = doc.createElement("div");
+                    node.className = "mf-cursor-trail";
+                    node.dataset.i = String(i);
+                    node.appendChild(doc.createElement("span"));
+                    root.appendChild(node);
+                }}
+                trails.push({{ node, x: 0, y: 0 }});
+            }}
+            for (let i = 0; i < echoCount; i += 1) {{
+                let node = root.querySelector(`.mf-cursor-echo[data-i="${{i}}"]`);
+                if (!node) {{
+                    node = doc.createElement("div");
+                    node.className = "mf-cursor-echo";
+                    node.dataset.i = String(i);
+                    node.appendChild(doc.createElement("span"));
+                    root.appendChild(node);
+                }}
+                echoes.push({{ node, x: 0, y: 0, life: 0, scale: 0.9 }});
+            }}
+
+            const state = {{
+                mx: parentWin.innerWidth * 0.5, my: parentWin.innerHeight * 0.5,
+                x: parentWin.innerWidth * 0.5, y: parentWin.innerHeight * 0.5,
+                px: parentWin.innerWidth * 0.5, py: parentWin.innerHeight * 0.5,
+                dx: 0, dy: 0, speed: 0, lastMoveTime: performance.now(), hover: false, down: false,
+                textMode: false, frame: 0, echoIdx: 0, targets: [], glowBoost: 0, theme: payload.themes[0]
+            }};
+
+            const refreshTargets = () => {{
+                state.targets = Array.from(doc.querySelectorAll("button, a, [role='button'], .stButton button, .stDownloadButton button"));
+            }};
+            refreshTargets();
+            const observer = new MutationObserver(() => {{ if (state.frame % 14 === 0) refreshTargets(); }});
+            observer.observe(doc.body, {{ childList: true, subtree: true }});
+
+            const resolveTheme = (name) => {{
+                const q = normalize(name);
+                if (!q) return payload.themes[0];
+                for (const theme of payload.themes) {{
+                    for (const key of theme.keys) {{
+                        const k = normalize(key);
+                        if (q.includes(k) || k.includes(q)) return theme;
+                    }}
+                }}
+                return payload.fallback;
+            }};
+
+            const applyTheme = (name) => {{
+                const theme = resolveTheme(name);
+                state.theme = theme;
+                const icon = theme.icon || payload.fallback.icon;
+                const rgb = theme.color || payload.fallback.color;
+                iconNode.textContent = icon;
+                head.style.setProperty("--mf-cursor-rgb", rgb);
+                trails.forEach((t) => (t.node.firstChild.textContent = icon));
+                echoes.forEach((e) => (e.node.firstChild.textContent = icon));
+            }};
+            applyTheme("onion");
+
+            const pickInteractionState = (target) => {{
+                if (!target || !target.closest) {{
+                    state.hover = false; state.textMode = false; return;
+                }}
+                const textEl = target.closest("input, textarea, [contenteditable='true'], [contenteditable=''], .stTextInput input");
+                const hit = target.closest("button, a, [role='button'], input, textarea, select, label, .stButton button, .stDownloadButton button");
+                state.hover = !!hit; state.textMode = !!textEl;
+            }};
+
+            const onGlobalMove = (ev) => {{
+                state.mx = ev.clientX;
+                state.my = ev.clientY;
+                state.lastMoveTime = performance.now();
+                pickInteractionState(ev.target);
+            }};
+            parentWin.addEventListener("mousemove", onGlobalMove, {{ passive: true }});
+            parentWin.addEventListener("pointermove", onGlobalMove, {{ passive: true }});
+            doc.addEventListener("mousemove", onGlobalMove, {{ passive: true }});
+            doc.addEventListener("mouseover", (ev) => pickInteractionState(ev.target), {{ passive: true }});
+            doc.addEventListener("mousedown", () => (state.down = true), {{ passive: true }});
+            doc.addEventListener("mouseup", () => (state.down = false), {{ passive: true }});
+            parentWin.addEventListener("blur", () => {{ state.hover = false; state.down = false; }});
+
+            const magneticLean = () => {{
+                if (!state.targets.length || state.textMode) return {{ x: 0, y: 0 }};
+                let best = null;
+                let bestD = 999999;
+                for (const el of state.targets) {{
+                    const r = el.getBoundingClientRect();
+                    if (!r || r.width < 2 || r.height < 2) continue;
+                    const cx = r.left + r.width * 0.5;
+                    const cy = r.top + r.height * 0.5;
+                    const dx = cx - state.x;
+                    const dy = cy - state.y;
+                    const d2 = dx * dx + dy * dy;
+                    if (d2 < bestD) {{
+                        bestD = d2;
+                        best = {{ dx, dy }};
+                    }}
+                }}
+                if (!best) return {{ x: 0, y: 0 }};
+                const d = Math.sqrt(bestD);
+                const threshold = 130;
+                if (d > threshold) return {{ x: 0, y: 0 }};
+                const p = 1 - d / threshold;
+                return {{ x: best.dx * p * 0.11, y: best.dy * p * 0.11 }};
+            }};
+
+            const animate = () => {{
+                state.frame += 1;
+                const now = performance.now();
+                const idleTime = now - state.lastMoveTime;
+
+                const lean = magneticLean();
+                const tx = state.mx + lean.x;
+                const ty = state.my + lean.y;
+                const targetDx = tx - state.x;
+                const targetDy = ty - state.y;
+                const dist = Math.sqrt(targetDx * targetDx + targetDy * targetDy);
+                const snapMode = dist < 0.5;
+                const headSmoothing = snapMode ? 0.34 : 0.15;
+                state.x += targetDx * headSmoothing;
+                state.y += targetDy * headSmoothing;
+                if (snapMode && dist < 0.08) {{
+                    state.x = tx;
+                    state.y = ty;
+                }}
+
+                const dx = state.x - state.px;
+                const dy = state.y - state.py;
+                state.dx = dx;
+                state.dy = dy;
+                state.speed = Math.sqrt(dx * dx + dy * dy);
+                if (state.speed < 0.03 && dist < 0.8) {{
+                    state.speed = 0;
+                    state.dx = 0;
+                    state.dy = 0;
+                }}
+                state.px = state.x;
+                state.py = state.y;
+                const speedN = clamp(state.speed / 20, 0, 1);
+                state.glowBoost = lerp(state.glowBoost, speedN, 0.12);
+
+                const idleFloat = idleTime > 110 ? Math.sin(now * 0.004) * 1.8 : 0;
+                const idleLift = idleTime > 110 ? Math.cos(now * 0.0035) * 1.5 : 0;
+                const hx = state.x + idleFloat;
+                const hy = state.y + idleLift;
+                const stretchX = 1 + speedN * 0.24;
+                const stretchY = 1 - speedN * 0.10;
+                const breathing = 1 + Math.sin(now * 0.005) * 0.025;
+                const hoverScale = state.hover ? 1.12 : 1.0;
+                const textScale = state.textMode ? 0.92 : 1.0;
+                const clickScale = state.down ? 0.90 : 1.0;
+                const totalScale = breathing * hoverScale * textScale * clickScale;
+
+                const glowAlpha = 0.24 + state.glowBoost * (state.hover ? 0.23 : 0.16);
+                head.style.boxShadow = `0 0 0 1px rgba(${{state.theme.color || payload.fallback.color}}, 0.22), 0 0 20px rgba(${{state.theme.color || payload.fallback.color}}, ${{glowAlpha.toFixed(3)}})`;
+                head.style.transform = `translate3d(${{hx.toFixed(2)}}px, ${{hy.toFixed(2)}}px, 0) scale(${{(stretchX * totalScale).toFixed(3)}}, ${{(stretchY * totalScale).toFixed(3)}})`;
+
+                trails[0].x = lerp(trails[0].x, hx, snapMode ? 0.40 : 0.28);
+                trails[0].y = lerp(trails[0].y, hy, snapMode ? 0.40 : 0.28);
+                const speedSpread = 4 + speedN * 18;
+                const tightness = state.hover ? 0.40 : (state.textMode ? 0.48 : 0.32);
+                for (let i = 0; i < trails.length; i += 1) {{
+                    const prev = i === 0 ? trails[0] : trails[i - 1];
+                    const item = trails[i];
+                    const follow = clamp((snapMode ? tightness + 0.08 : tightness) - speedN * 0.10 + i * 0.004, 0.18, 0.52);
+                    item.x = lerp(item.x, prev.x - state.dx * 0.6 - i * (speedSpread * 0.018), follow);
+                    item.y = lerp(item.y, prev.y - state.dy * 0.6 - i * (speedSpread * 0.018), follow);
+                    const o = clamp(0.52 - i * 0.06 + speedN * 0.10, 0.06, 0.62);
+                    const s = clamp(0.90 - i * 0.05 + speedN * 0.06, 0.54, 1.02);
+                    item.node.style.opacity = o.toFixed(3);
+                    item.node.style.transform = `translate3d(${{item.x.toFixed(2)}}px, ${{item.y.toFixed(2)}}px, 0) scale(${{s.toFixed(3)}})`;
+                }}
+
+                if (state.speed > 1.2 && state.frame % 3 === 0) {{
+                    const e = echoes[state.echoIdx % echoes.length];
+                    e.x = hx - state.dx * 4.2;
+                    e.y = hy - state.dy * 4.2;
+                    e.life = 1;
+                    e.scale = 0.78 + speedN * 0.26;
+                    state.echoIdx += 1;
+                }}
+                for (const e of echoes) {{
+                    if (e.life <= 0.01) {{
+                        e.node.style.opacity = "0";
+                        continue;
+                    }}
+                    e.life *= 0.82;
+                    e.scale *= 1.02;
+                    e.node.style.opacity = (e.life * 0.28).toFixed(3);
+                    e.node.style.transform = `translate3d(${{e.x.toFixed(2)}}px, ${{e.y.toFixed(2)}}px, 0) scale(${{e.scale.toFixed(3)}})`;
+                }}
+
+                parentWin.requestAnimationFrame(animate);
+            }};
+
+            parentWin.__mfPremiumCursor = {{
+                setCommodity: (name) => applyTheme(name || "onion"),
+                refresh: () => refreshTargets()
+            }};
+            animate();
+        }})();
+        </script>
+        """,
+        height=0,
+        width=0,
+    )
+
+
+def set_cursor_commodity(name):
+    """Update premium cursor icon and theme dynamically via JS bridge."""
+    safe_name = json.dumps(str(name or ""))
+    components.html(
+        f"""
+        <script>
+        (() => {{
+            const parentWin = window.parent;
+            if (parentWin.__mfPremiumCursor && typeof parentWin.__mfPremiumCursor.setCommodity === "function") {{
+                parentWin.__mfPremiumCursor.setCommodity({safe_name});
+            }}
+        }})();
+        </script>
+        """,
+        height=0,
+        width=0,
+    )
+
+
 # --- 2. SETTINGS & UI STYLING ---
 st.set_page_config(page_title="MandiFlow Intelligence", layout="wide", page_icon="🌾")
+inject_premium_cursor()
 
 st.markdown("""
     <style>
@@ -972,6 +1517,7 @@ with st.sidebar:
     )
     # Strip the ⭐ prefix before using the value anywhere
     commodity = selected_display.replace("⭐ ", "").strip()
+    set_cursor_commodity(commodity)
     sidebar_loading_slot = st.empty()
 
     # 3.2 Network Status Widget
