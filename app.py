@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import folium
 import difflib
@@ -1034,8 +1035,338 @@ def require_authentication():
 
     st.stop()
 
+
+# --- Premium Cursor Bridge ---
+def inject_premium_cursor():
+    """Inject a single high-performance custom cursor system into the parent document."""
+    commodity_themes = [
+        {"keys": ["onion", "pyaj"], "icon": "🧅", "color": "152, 108, 255"},
+        {"keys": ["tomato", "tamatar"], "icon": "🍅", "color": "241, 78, 78"},
+        {"keys": ["wheat", "gehun"], "icon": "🌾", "color": "235, 184, 86"},
+        {"keys": ["garlic", "lahsun"], "icon": "🧄", "color": "213, 223, 241"},
+        {"keys": ["potato", "aloo"], "icon": "🥔", "color": "210, 176, 129"},
+        {"keys": ["rice", "chawal", "paddy"], "icon": "🍚", "color": "243, 236, 202"},
+        {"keys": ["maize", "corn", "makka"], "icon": "🌽", "color": "245, 202, 83"},
+        {"keys": ["banana", "kela"], "icon": "🍌", "color": "250, 217, 100"},
+        {"keys": ["apple"], "icon": "🍎", "color": "243, 91, 91"},
+    ]
+    payload = json.dumps(
+        {"themes": commodity_themes, "fallback": {"icon": "●", "color": "176, 189, 212"}}
+    )
+    components.html(
+        f"""
+        <script>
+        (() => {{
+            const parentWin = window.parent;
+            const doc = parentWin.document;
+            const payload = {payload};
+            if (!doc || parentWin.__mfPremiumCursorBooted) {{
+                if (parentWin.__mfPremiumCursor && typeof parentWin.__mfPremiumCursor.refresh === "function") {{
+                    parentWin.__mfPremiumCursor.refresh();
+                }}
+                return;
+            }}
+            parentWin.__mfPremiumCursorBooted = true;
+
+            const lerp = (a, b, t) => a + (b - a) * t;
+            const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+            const normalize = (value) =>
+                String(value || "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\\s+/g, " ").trim();
+
+            const styleId = "mf-premium-cursor-style";
+            if (!doc.getElementById(styleId)) {{
+                const style = doc.createElement("style");
+                style.id = styleId;
+                style.textContent = `
+                    html, body, *, *::before, *::after {{ cursor: none !important; }}
+                    .mf-cursor-root {{
+                        position: fixed; inset: 0; z-index: 2147483646; pointer-events: none; contain: strict;
+                    }}
+                    .mf-cursor-head, .mf-cursor-trail, .mf-cursor-echo {{
+                        position: fixed; left: 0; top: 0;
+                        transform: translate3d(-9999px, -9999px, 0);
+                        will-change: transform, opacity; pointer-events: none; user-select: none;
+                    }}
+                    .mf-cursor-head {{
+                        width: 30px; height: 30px; margin-left: -15px; margin-top: -15px; border-radius: 999px;
+                        border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(255, 255, 255, 0.08);
+                        box-shadow: 0 0 0 1px rgba(var(--mf-cursor-rgb, 152, 108, 255), 0.18), 0 0 20px rgba(var(--mf-cursor-rgb, 152, 108, 255), 0.24);
+                        display: flex; align-items: center; justify-content: center;
+                        transform-origin: center; backface-visibility: hidden;
+                    }}
+                    .mf-cursor-icon {{ font-size: 18px; line-height: 1; transform: translateZ(0); }}
+                    .mf-cursor-trail {{
+                        width: 18px; height: 18px; margin-left: -9px; margin-top: -9px;
+                        display: flex; align-items: center; justify-content: center; opacity: 0;
+                    }}
+                    .mf-cursor-trail > span {{ font-size: 13px; line-height: 1; opacity: 0.85; }}
+                    .mf-cursor-echo {{
+                        width: 14px; height: 14px; margin-left: -7px; margin-top: -7px;
+                        display: flex; align-items: center; justify-content: center; opacity: 0;
+                    }}
+                    .mf-cursor-echo > span {{ font-size: 12px; line-height: 1; }}
+                    @media (pointer: coarse) {{ .mf-cursor-root {{ display: none !important; }} }}
+                `;
+                doc.head.appendChild(style);
+            }}
+
+            let root = doc.getElementById("mf-cursor-root");
+            if (!root) {{
+                root = doc.createElement("div");
+                root.id = "mf-cursor-root";
+                root.className = "mf-cursor-root";
+                doc.body.appendChild(root);
+            }}
+            let head = root.querySelector(".mf-cursor-head");
+            if (!head) {{
+                head = doc.createElement("div");
+                head.className = "mf-cursor-head";
+                const icon = doc.createElement("span");
+                icon.className = "mf-cursor-icon";
+                icon.textContent = "🧅";
+                head.appendChild(icon);
+                root.appendChild(head);
+            }}
+            const iconNode = head.querySelector(".mf-cursor-icon");
+
+            const trailCount = 8;
+            const echoCount = 10;
+            const trails = [];
+            const echoes = [];
+            for (let i = 0; i < trailCount; i += 1) {{
+                let node = root.querySelector(`.mf-cursor-trail[data-i="${{i}}"]`);
+                if (!node) {{
+                    node = doc.createElement("div");
+                    node.className = "mf-cursor-trail";
+                    node.dataset.i = String(i);
+                    node.appendChild(doc.createElement("span"));
+                    root.appendChild(node);
+                }}
+                trails.push({{ node, x: 0, y: 0 }});
+            }}
+            for (let i = 0; i < echoCount; i += 1) {{
+                let node = root.querySelector(`.mf-cursor-echo[data-i="${{i}}"]`);
+                if (!node) {{
+                    node = doc.createElement("div");
+                    node.className = "mf-cursor-echo";
+                    node.dataset.i = String(i);
+                    node.appendChild(doc.createElement("span"));
+                    root.appendChild(node);
+                }}
+                echoes.push({{ node, x: 0, y: 0, life: 0, scale: 0.9 }});
+            }}
+
+            const state = {{
+                mx: parentWin.innerWidth * 0.5, my: parentWin.innerHeight * 0.5,
+                x: parentWin.innerWidth * 0.5, y: parentWin.innerHeight * 0.5,
+                px: parentWin.innerWidth * 0.5, py: parentWin.innerHeight * 0.5,
+                dx: 0, dy: 0, speed: 0, lastMoveTime: performance.now(), hover: false, down: false,
+                textMode: false, frame: 0, echoIdx: 0, targets: [], glowBoost: 0, theme: payload.themes[0]
+            }};
+
+            const refreshTargets = () => {{
+                state.targets = Array.from(doc.querySelectorAll("button, a, [role='button'], .stButton button, .stDownloadButton button"));
+            }};
+            refreshTargets();
+            const observer = new MutationObserver(() => {{ if (state.frame % 14 === 0) refreshTargets(); }});
+            observer.observe(doc.body, {{ childList: true, subtree: true }});
+
+            const resolveTheme = (name) => {{
+                const q = normalize(name);
+                if (!q) return payload.themes[0];
+                for (const theme of payload.themes) {{
+                    for (const key of theme.keys) {{
+                        const k = normalize(key);
+                        if (q.includes(k) || k.includes(q)) return theme;
+                    }}
+                }}
+                return payload.fallback;
+            }};
+
+            const applyTheme = (name) => {{
+                const theme = resolveTheme(name);
+                state.theme = theme;
+                const icon = theme.icon || payload.fallback.icon;
+                const rgb = theme.color || payload.fallback.color;
+                iconNode.textContent = icon;
+                head.style.setProperty("--mf-cursor-rgb", rgb);
+                trails.forEach((t) => (t.node.firstChild.textContent = icon));
+                echoes.forEach((e) => (e.node.firstChild.textContent = icon));
+            }};
+            applyTheme("onion");
+
+            const pickInteractionState = (target) => {{
+                if (!target || !target.closest) {{
+                    state.hover = false; state.textMode = false; return;
+                }}
+                const textEl = target.closest("input, textarea, [contenteditable='true'], [contenteditable=''], .stTextInput input");
+                const hit = target.closest("button, a, [role='button'], input, textarea, select, label, .stButton button, .stDownloadButton button");
+                state.hover = !!hit; state.textMode = !!textEl;
+            }};
+
+            const onGlobalMove = (ev) => {{
+                state.mx = ev.clientX;
+                state.my = ev.clientY;
+                state.lastMoveTime = performance.now();
+                pickInteractionState(ev.target);
+            }};
+            parentWin.addEventListener("mousemove", onGlobalMove, {{ passive: true }});
+            parentWin.addEventListener("pointermove", onGlobalMove, {{ passive: true }});
+            doc.addEventListener("mousemove", onGlobalMove, {{ passive: true }});
+            doc.addEventListener("mouseover", (ev) => pickInteractionState(ev.target), {{ passive: true }});
+            doc.addEventListener("mousedown", () => (state.down = true), {{ passive: true }});
+            doc.addEventListener("mouseup", () => (state.down = false), {{ passive: true }});
+            parentWin.addEventListener("blur", () => {{ state.hover = false; state.down = false; }});
+
+            const magneticLean = () => {{
+                if (!state.targets.length || state.textMode) return {{ x: 0, y: 0 }};
+                let best = null;
+                let bestD = 999999;
+                for (const el of state.targets) {{
+                    const r = el.getBoundingClientRect();
+                    if (!r || r.width < 2 || r.height < 2) continue;
+                    const cx = r.left + r.width * 0.5;
+                    const cy = r.top + r.height * 0.5;
+                    const dx = cx - state.x;
+                    const dy = cy - state.y;
+                    const d2 = dx * dx + dy * dy;
+                    if (d2 < bestD) {{
+                        bestD = d2;
+                        best = {{ dx, dy }};
+                    }}
+                }}
+                if (!best) return {{ x: 0, y: 0 }};
+                const d = Math.sqrt(bestD);
+                const threshold = 130;
+                if (d > threshold) return {{ x: 0, y: 0 }};
+                const p = 1 - d / threshold;
+                return {{ x: best.dx * p * 0.11, y: best.dy * p * 0.11 }};
+            }};
+
+            const animate = () => {{
+                state.frame += 1;
+                const now = performance.now();
+                const idleTime = now - state.lastMoveTime;
+
+                const lean = magneticLean();
+                const tx = state.mx + lean.x;
+                const ty = state.my + lean.y;
+                const targetDx = tx - state.x;
+                const targetDy = ty - state.y;
+                const dist = Math.sqrt(targetDx * targetDx + targetDy * targetDy);
+                const snapMode = dist < 0.5;
+                const headSmoothing = snapMode ? 0.34 : 0.15;
+                state.x += targetDx * headSmoothing;
+                state.y += targetDy * headSmoothing;
+                if (snapMode && dist < 0.08) {{
+                    state.x = tx;
+                    state.y = ty;
+                }}
+
+                const dx = state.x - state.px;
+                const dy = state.y - state.py;
+                state.dx = dx;
+                state.dy = dy;
+                state.speed = Math.sqrt(dx * dx + dy * dy);
+                if (state.speed < 0.03 && dist < 0.8) {{
+                    state.speed = 0;
+                    state.dx = 0;
+                    state.dy = 0;
+                }}
+                state.px = state.x;
+                state.py = state.y;
+                const speedN = clamp(state.speed / 20, 0, 1);
+                state.glowBoost = lerp(state.glowBoost, speedN, 0.12);
+
+                const idleFloat = idleTime > 110 ? Math.sin(now * 0.004) * 1.8 : 0;
+                const idleLift = idleTime > 110 ? Math.cos(now * 0.0035) * 1.5 : 0;
+                const hx = state.x + idleFloat;
+                const hy = state.y + idleLift;
+                const stretchX = 1 + speedN * 0.24;
+                const stretchY = 1 - speedN * 0.10;
+                const breathing = 1 + Math.sin(now * 0.005) * 0.025;
+                const hoverScale = state.hover ? 1.12 : 1.0;
+                const textScale = state.textMode ? 0.92 : 1.0;
+                const clickScale = state.down ? 0.90 : 1.0;
+                const totalScale = breathing * hoverScale * textScale * clickScale;
+
+                const glowAlpha = 0.24 + state.glowBoost * (state.hover ? 0.23 : 0.16);
+                head.style.boxShadow = `0 0 0 1px rgba(${{state.theme.color || payload.fallback.color}}, 0.22), 0 0 20px rgba(${{state.theme.color || payload.fallback.color}}, ${{glowAlpha.toFixed(3)}})`;
+                head.style.transform = `translate3d(${{hx.toFixed(2)}}px, ${{hy.toFixed(2)}}px, 0) scale(${{(stretchX * totalScale).toFixed(3)}}, ${{(stretchY * totalScale).toFixed(3)}})`;
+
+                trails[0].x = lerp(trails[0].x, hx, snapMode ? 0.40 : 0.28);
+                trails[0].y = lerp(trails[0].y, hy, snapMode ? 0.40 : 0.28);
+                const speedSpread = 4 + speedN * 18;
+                const tightness = state.hover ? 0.40 : (state.textMode ? 0.48 : 0.32);
+                for (let i = 0; i < trails.length; i += 1) {{
+                    const prev = i === 0 ? trails[0] : trails[i - 1];
+                    const item = trails[i];
+                    const follow = clamp((snapMode ? tightness + 0.08 : tightness) - speedN * 0.10 + i * 0.004, 0.18, 0.52);
+                    item.x = lerp(item.x, prev.x - state.dx * 0.6 - i * (speedSpread * 0.018), follow);
+                    item.y = lerp(item.y, prev.y - state.dy * 0.6 - i * (speedSpread * 0.018), follow);
+                    const o = clamp(0.52 - i * 0.06 + speedN * 0.10, 0.06, 0.62);
+                    const s = clamp(0.90 - i * 0.05 + speedN * 0.06, 0.54, 1.02);
+                    item.node.style.opacity = o.toFixed(3);
+                    item.node.style.transform = `translate3d(${{item.x.toFixed(2)}}px, ${{item.y.toFixed(2)}}px, 0) scale(${{s.toFixed(3)}})`;
+                }}
+
+                if (state.speed > 1.2 && state.frame % 3 === 0) {{
+                    const e = echoes[state.echoIdx % echoes.length];
+                    e.x = hx - state.dx * 4.2;
+                    e.y = hy - state.dy * 4.2;
+                    e.life = 1;
+                    e.scale = 0.78 + speedN * 0.26;
+                    state.echoIdx += 1;
+                }}
+                for (const e of echoes) {{
+                    if (e.life <= 0.01) {{
+                        e.node.style.opacity = "0";
+                        continue;
+                    }}
+                    e.life *= 0.82;
+                    e.scale *= 1.02;
+                    e.node.style.opacity = (e.life * 0.28).toFixed(3);
+                    e.node.style.transform = `translate3d(${{e.x.toFixed(2)}}px, ${{e.y.toFixed(2)}}px, 0) scale(${{e.scale.toFixed(3)}})`;
+                }}
+
+                parentWin.requestAnimationFrame(animate);
+            }};
+
+            parentWin.__mfPremiumCursor = {{
+                setCommodity: (name) => applyTheme(name || "onion"),
+                refresh: () => refreshTargets()
+            }};
+            animate();
+        }})();
+        </script>
+        """,
+        height=0,
+        width=0,
+    )
+
+
+def set_cursor_commodity(name):
+    """Update premium cursor icon and theme dynamically via JS bridge."""
+    safe_name = json.dumps(str(name or ""))
+    components.html(
+        f"""
+        <script>
+        (() => {{
+            const parentWin = window.parent;
+            if (parentWin.__mfPremiumCursor && typeof parentWin.__mfPremiumCursor.setCommodity === "function") {{
+                parentWin.__mfPremiumCursor.setCommodity({safe_name});
+            }}
+        }})();
+        </script>
+        """,
+        height=0,
+        width=0,
+    )
+
+
 # --- 2. SETTINGS & UI STYLING ---
 st.set_page_config(page_title="MandiFlow Intelligence", layout="wide", page_icon="🌾")
+inject_premium_cursor()
 
 st.markdown("""
     <style>
@@ -1186,6 +1517,7 @@ with st.sidebar:
     )
     # Strip the ⭐ prefix before using the value anywhere
     commodity = selected_display.replace("⭐ ", "").strip()
+    set_cursor_commodity(commodity)
     sidebar_loading_slot = st.empty()
 
     # 3.2 Network Status Widget
