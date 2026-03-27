@@ -9,6 +9,7 @@ import os
 import json
 import secrets
 import html
+import re
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -281,13 +282,103 @@ def parse_firebase_error(error_code):
         "OPERATION_NOT_ALLOWED": "Email/password sign-in is not enabled in Firebase.",
         "TOO_MANY_ATTEMPTS_TRY_LATER": "Too many attempts. Please try again later.",
         "EMAIL_NOT_FOUND": "No account found with this email.",
+        "USER_NOT_FOUND": "No account found with this email.",
         "INVALID_PASSWORD": "Incorrect password.",
         "USER_DISABLED": "This account has been disabled by an administrator.",
         "INVALID_EMAIL": "Please enter a valid email address.",
+        "MISSING_EMAIL": "Please enter your email address.",
+        "RESET_PASSWORD_EXCEED_LIMIT": "Too many reset requests. Please try again later.",
         "WEAK_PASSWORD : Password should be at least 6 characters": "Password must be at least 6 characters long.",
         "WEAK_PASSWORD": "Password must be at least 6 characters long.",
     }
     return message_map.get(error_code, f"Authentication failed: {error_code}")
+
+
+def is_valid_email(email):
+    """Validate basic email format before sending Firebase request."""
+    if not email:
+        return False
+    return bool(re.match(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", email))
+
+
+def send_password_reset_email(email):
+    """
+    Send Firebase password reset email via REST API using requests.
+    Returns (success: bool, message: str).
+    """
+    api_key = get_firebase_api_key()
+    if not api_key:
+        return False, "Firebase API key is missing."
+
+    if not is_valid_email(email):
+        return False, "Please enter a valid email address."
+
+    url = f"https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key={api_key}"
+    payload = {"requestType": "PASSWORD_RESET", "email": email.strip()}
+
+    try:
+        response = _req.post(url, json=payload, timeout=20)
+        data = response.json()
+    except _req.exceptions.Timeout:
+        return False, "Request timed out. Please try again."
+    except _req.exceptions.ConnectionError:
+        return False, "Unable to reach Firebase. Check your internet connection."
+    except _req.exceptions.RequestException:
+        return False, "Unable to send reset email right now. Please try again."
+    except ValueError:
+        return False, "Firebase returned an invalid response."
+
+    if response.status_code >= 400:
+        error_code = data.get("error", {}).get("message", "UNKNOWN_ERROR")
+        return False, parse_firebase_error(error_code)
+
+    return True, "Password reset link sent. Please check your inbox (and spam folder)."
+
+
+def render_forgot_password_page():
+    """Render a focused forgot-password screen and handle reset flow."""
+    st.markdown("### Reset your password")
+    st.caption("Enter your account email and we will send you a reset link.")
+
+    # Prefill with login email if user already typed it on the sign-in tab.
+    default_email = st.session_state.get("login_email", "")
+    if "forgot_password_email" not in st.session_state:
+        st.session_state.forgot_password_email = default_email
+
+    email = st.text_input(
+        "Email",
+        key="forgot_password_email",
+        placeholder="you@example.com",
+        help="Use the same email that you registered with.",
+    )
+    use_spinner = st.checkbox("Show loading spinner while sending", value=True)
+
+    col_send, col_back = st.columns([2, 1])
+
+    with col_send:
+        if st.button("Send Reset Link", use_container_width=True):
+            cleaned_email = email.strip()
+            if not cleaned_email:
+                st.warning("Please enter your email address.")
+            elif not is_valid_email(cleaned_email):
+                st.error("Please enter a valid email address.")
+            else:
+                if use_spinner:
+                    with st.spinner("Sending reset link..."):
+                        success, message = send_password_reset_email(cleaned_email)
+                else:
+                    success, message = send_password_reset_email(cleaned_email)
+
+                if success:
+                    st.success(message)
+                    st.info("After resetting your password, return to Sign In and continue.")
+                else:
+                    st.error(message)
+
+    with col_back:
+        if st.button("Back to Sign In", use_container_width=True):
+            st.session_state.auth_view = "login"
+            st.rerun()
 
 
 def firebase_auth_request(endpoint, payload):
@@ -445,6 +536,7 @@ def build_auth_user(auth_data, fallback_email=""):
 def save_authenticated_user(auth_data, fallback_email=""):
     user = build_auth_user(auth_data, fallback_email=fallback_email)
     st.session_state.auth_user = user
+    st.session_state.auth_view = "login"
     if user.get("refresh_token"):
         set_query_param("rt", user["refresh_token"])
     return user
@@ -475,7 +567,16 @@ def restore_auth_session_from_query():
 
 
 def logout_user():
-    for key in ["auth_user", "google_oauth_state", "mandi_data", "is_live", "last_comm", "last_update"]:
+    for key in [
+        "auth_user",
+        "google_oauth_state",
+        "auth_view",
+        "forgot_password_email",
+        "mandi_data",
+        "is_live",
+        "last_comm",
+        "last_update",
+    ]:
         if key in st.session_state:
             del st.session_state[key]
     clear_auth_query_params()
@@ -493,11 +594,43 @@ def require_authentication():
         """
         <style>
         [data-testid="stAppViewContainer"] {
-            background: linear-gradient(-45deg, #01020a, #020617, #040b1d, #07122b);
-            background-size: 400% 400%;
-            animation: gradientMove 12s ease infinite;
+            background: linear-gradient(-45deg, #020f33, #041b4d, #020a1f, #000000);
+            background-size: 280% 280%;
+            animation: gradientMove 4.8s linear infinite;
             position: relative;
             overflow: hidden;
+        }
+        [data-testid="stAppViewContainer"]::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background:
+                radial-gradient(circle at 14% 18%, rgba(20, 76, 178, 0.34), transparent 36%),
+                radial-gradient(circle at 84% 22%, rgba(13, 53, 138, 0.26), transparent 34%),
+                radial-gradient(circle at 18% 84%, rgba(7, 36, 98, 0.22), transparent 38%),
+                radial-gradient(circle at 78% 78%, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.94) 64%),
+                radial-gradient(circle at 50% 50%, rgba(9, 34, 90, 0.20), transparent 48%),
+                repeating-linear-gradient(
+                    135deg,
+                    rgba(255, 255, 255, 0.018) 0px,
+                    rgba(255, 255, 255, 0.018) 2px,
+                    transparent 2px,
+                    transparent 20px
+                );
+            mix-blend-mode: screen;
+        }
+        [data-testid="stAppViewContainer"]::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background:
+                radial-gradient(circle at 50% 46%, rgba(35, 112, 255, 0.10), transparent 34%),
+                radial-gradient(circle at 50% 46%, rgba(0, 0, 0, 0.00), rgba(0, 0, 0, 0.55) 72%);
+            animation: meshPulse 3.6s ease-in-out infinite alternate;
         }
         [data-testid="stHeader"],
         [data-testid="stDecoration"] {
@@ -519,11 +652,11 @@ def require_authentication():
             gap: 16px;
             padding: 28px 32px 34px 32px !important;
             border-radius: 20px;
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(34, 211, 238, 0.3);
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+            background: linear-gradient(180deg, rgba(6, 16, 40, 0.78), rgba(2, 7, 20, 0.92));
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(34, 211, 238, 0.22);
+            box-shadow: 0 18px 44px rgba(0, 0, 0, 0.72);
             margin: 0 auto !important;
         }
         .auth-bg-blob {
@@ -531,27 +664,27 @@ def require_authentication():
             width: 300px;
             height: 300px;
             border-radius: 999px;
-            filter: blur(120px);
+            filter: blur(95px);
             z-index: 0;
             pointer-events: none;
-            animation: blobFloat 10s infinite alternate ease-in-out;
+            animation: blobFloat 5.2s infinite alternate ease-in-out;
         }
         .auth-bg-blob.blob-a {
             top: -80px;
             left: -100px;
-            background: rgba(30, 58, 138, 0.28);
+            background: rgba(7, 35, 94, 0.20);
         }
         .auth-bg-blob.blob-b {
             right: -80px;
             top: 25%;
-            background: rgba(37, 99, 235, 0.18);
-            animation-duration: 12s;
+            background: rgba(4, 24, 74, 0.18);
+            animation-duration: 6s;
         }
         .auth-bg-blob.blob-c {
             bottom: -110px;
             left: 40%;
-            background: rgba(15, 23, 42, 0.4);
-            animation-duration: 14s;
+            background: rgba(0, 0, 0, 0.64);
+            animation-duration: 6.5s;
         }
         .auth-title {
             margin: 0;
@@ -572,28 +705,45 @@ def require_authentication():
             margin-right: auto;
         }
         div[data-baseweb="tab-list"] {
-            gap: 10px;
-            margin: 8px 0 16px 0;
+            gap: 12px;
+            margin: 10px 0 18px 0;
+            padding: 2px 0;
         }
         div[data-baseweb="tab-list"] button[role="tab"] {
-            border-radius: 12px !important;
-            color: #ffffff !important;
+            border-radius: 16px !important;
+            color: #dbe7ff !important;
             border: 1px solid rgba(71, 85, 105, 0.55) !important;
-            background: rgba(30, 41, 59, 0.92) !important;
-            transition: all 0.3s ease !important;
+            background: rgba(21, 35, 62, 0.86) !important;
+            min-height: 52px !important;
+            padding: 10px 18px !important;
+            transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease !important;
             font-weight: 600 !important;
+            line-height: 1.1 !important;
+            text-decoration: none !important;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
         }
         div[data-baseweb="tab-list"] button[role="tab"]:hover {
-            transform: scale(1.05);
+            transform: none !important;
             box-shadow: none !important;
             filter: none;
-            background: rgba(15, 23, 42, 0.82) !important;
+            color: #ffffff !important;
+            border-color: rgba(56, 189, 248, 0.45) !important;
+            background: rgba(17, 30, 55, 0.95) !important;
         }
         div[data-baseweb="tab-list"] button[aria-selected="true"] {
-            background: rgba(30, 41, 59, 0.98) !important;
-            border: 1px solid rgba(56, 189, 248, 0.5) !important;
+            color: #ffffff !important;
+            background: rgba(25, 45, 78, 0.96) !important;
+            border: 1px solid rgba(56, 189, 248, 0.95) !important;
             filter: none;
-            box-shadow: 0 0 8px rgba(14, 165, 233, 0.2);
+            box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.22), 0 4px 14px rgba(2, 132, 199, 0.22);
+            text-decoration: none !important;
+        }
+        div[data-baseweb="tab-highlight"] {
+            display: none !important;
+        }
+        div[data-baseweb="tab-list"] button[role="tab"]::before,
+        div[data-baseweb="tab-list"] button[role="tab"]::after {
+            display: none !important;
         }
         .stTextInput > label p {
             color: #cbd5e1 !important;
@@ -616,12 +766,30 @@ def require_authentication():
             backdrop-filter: blur(10px);
             border: 1px solid rgba(148, 163, 184, 0.2) !important;
             color: #ffffff !important;
-            transition: all 0.3s ease !important;
+            transition: all 0.18s ease !important;
         }
         .stTextInput input:focus {
             outline: none !important;
             border-color: #22d3ee !important;
             box-shadow: 0 0 10px #22d3ee !important;
+        }
+        /* Hide Streamlit form hint: "Press Enter to submit form" */
+        [data-testid="InputInstructions"] {
+            display: none !important;
+        }
+        /* Hide browser-native password reveal so only one eye toggle is visible */
+        .stTextInput input[type="password"]::-ms-reveal,
+        .stTextInput input[type="password"]::-ms-clear {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+        /* Polished auth form card */
+        div[data-testid="stForm"] {
+            border: 1px solid rgba(71, 85, 105, 0.55) !important;
+            border-radius: 16px !important;
+            background: linear-gradient(180deg, rgba(5, 15, 37, 0.72), rgba(2, 10, 28, 0.72)) !important;
+            padding: 14px 10px 8px 10px !important;
         }
         .stForm [data-testid="stFormSubmitButton"] button,
         .stButton > button {
@@ -630,7 +798,7 @@ def require_authentication():
             border-radius: 12px !important;
             padding: 14px !important;
             border: none !important;
-            transition: all 0.3s ease !important;
+            transition: all 0.18s ease !important;
         }
         .stForm [data-testid="stFormSubmitButton"] button:hover,
         .stButton > button:hover {
@@ -641,7 +809,7 @@ def require_authentication():
         .divider {
             text-align: center;
             color: #94a3b8;
-            margin: 20px 0;
+            margin: 16px 0 14px 0;
         }
         .google-btn {
             display: flex;
@@ -655,7 +823,7 @@ def require_authentication():
             padding: 12px 14px;
             text-decoration: none !important;
             font-weight: 600;
-            transition: all 0.3s ease;
+            transition: all 0.18s ease;
         }
         .google-btn img {
             width: 18px;
@@ -671,10 +839,42 @@ def require_authentication():
             font-size: 0.95rem;
             line-height: 1.45;
         }
+        /* Small red link-style forgot-password action */
+        .st-key-open_forgot_password {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 2px !important;
+            margin-bottom: 6px !important;
+        }
+        .st-key-open_forgot_password button {
+            background: transparent !important;
+            border: none !important;
+            color: #fb7185 !important;
+            padding: 0 !important;
+            min-height: auto !important;
+            height: auto !important;
+            width: auto !important;
+            font-size: 0.86rem !important;
+            font-weight: 600 !important;
+            text-decoration: none !important;
+            letter-spacing: 0.01em;
+            box-shadow: none !important;
+        }
+        .st-key-open_forgot_password button:hover {
+            color: #fecdd3 !important;
+            transform: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            text-decoration: underline !important;
+        }
         @keyframes gradientMove {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
+        }
+        @keyframes meshPulse {
+            0% { opacity: 0.7; }
+            100% { opacity: 1; }
         }
         @keyframes blobFloat {
             from { transform: translate3d(0, 0, 0) scale(1); }
@@ -750,6 +950,14 @@ def require_authentication():
         google_cfg["client_id"] and google_cfg["client_secret"] and google_cfg["redirect_uri"]
     )
 
+    # Simple auth-page navigation state: "login" (default) or "forgot_password".
+    if "auth_view" not in st.session_state:
+        st.session_state.auth_view = "login"
+
+    if st.session_state.auth_view == "forgot_password":
+        render_forgot_password_page()
+        st.stop()
+
     login_tab, signup_tab = st.tabs(["Sign In", "Create Account"])
 
     with login_tab:
@@ -769,6 +977,12 @@ def require_authentication():
                     save_authenticated_user(auth_data, fallback_email=login_email.strip())
                     st.success("Login successful.")
                     st.rerun()
+
+        fp_col_left, fp_col_right = st.columns([3, 1])
+        with fp_col_right:
+            if st.button("Forgot Password?", key="open_forgot_password", use_container_width=False):
+                st.session_state.auth_view = "forgot_password"
+                st.rerun()
 
         st.markdown('<div class="divider">Or</div>', unsafe_allow_html=True)
         if google_ready:
