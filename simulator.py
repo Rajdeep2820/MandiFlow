@@ -176,6 +176,28 @@ def fetch_trailing_history(origin_name, commodity):
 
 # ... (Imports and Setup remain the same)
 
+def map_news_to_mandi(news_text, market_to_id):
+    """
+    Checks for global keywords and returns all node indices if found,
+    along with a price multiplier (shock).
+    """
+    news_lower = news_text.lower()
+    
+    # Global categories and their multipliers
+    global_events = {
+        "weather": (["drought", "heatwave"], 1.15),
+        "strikes": (["truckers strike", "farmers protest"], 1.10),
+        "policy": (["policy change"], 1.20)
+    }
+    
+    for category, (keywords, multiplier) in global_events.items():
+        for kw in keywords:
+            if kw in news_lower:
+                return list(market_to_id.values()), multiplier
+    
+    return None, None
+
+
 def simulate_shock(news_text, doc_text="", commodity="ONION"):
     combined = f"{news_text} {doc_text}".strip()
 
@@ -188,20 +210,40 @@ def simulate_shock(news_text, doc_text="", commodity="ONION"):
     market_names = res["market_names"]
     market_to_id = res["market_to_id"]
 
-    # 2. Convert Unstructured Text to Structured Subgraph Shock Multiplier
-    features_json = analyzer.extract_shock_features(combined)
-    impact_factor = features_json.get("impact_multiplier", 1.0)
-    extracted_origin = features_json.get("origin_mandi", "Unknown").strip()
-    extracted_district = features_json.get("origin_district", "").strip()
+    # 2. Check for Global Shock first
+    global_indices, global_multiplier = map_news_to_mandi(combined, market_to_id)
     
-    resolved_origin_name, target_idx, match_strategy = resolve_market_name(
-        extracted_origin,
-        market_to_id,
-        raw_district=extracted_district,
-    )
+    if global_indices:
+        target_idx = global_indices
+        impact_factor = global_multiplier
+        extracted_origin = "GLOBAL"
+        features_json = {
+            "commodities_affected": [commodity],
+            "origin_mandi": "GLOBAL",
+            "shock_type": "global",
+            "impact_multiplier": impact_factor
+        }
+        resolved_origin_name = "GLOBAL"
+    else:
+        # Convert Unstructured Text to Structured Subgraph Shock Multiplier
+        features_json = analyzer.extract_shock_features(combined)
+        impact_factor = features_json.get("impact_multiplier", 1.0)
+        extracted_origin = features_json.get("origin_mandi", "Unknown").strip()
+        extracted_district = features_json.get("origin_district", "").strip()
+        
+        resolved_origin_name, target_idx, match_strategy = resolve_market_name(
+            extracted_origin,
+            market_to_id,
+            raw_district=extracted_district,
+        )
 
     # 3. Fetch Dynamic History
-    history_lookup_name = resolved_origin_name or _normalize_market_text(extracted_origin)
+    if isinstance(target_idx, list):
+        # For global shock, we'll pick a representative mandi if possible, or use fallback
+        history_lookup_name = "LASALGAON" if "LASALGAON" in market_to_id else (market_names[0] if market_names else "Unknown")
+    else:
+        history_lookup_name = resolved_origin_name or _normalize_market_text(extracted_origin)
+    
     trailing_prices = fetch_trailing_history(history_lookup_name, commodity)
 
     if trailing_prices is not None:
@@ -244,17 +286,23 @@ def simulate_shock(news_text, doc_text="", commodity="ONION"):
 
     # 6. CONVERT RATIOS BACK TO RUPEES
     # Prediction * base_price gives the actual Rupee forecast
-    origin_forecast = pred_ratios[target_idx] * base_price
+    if isinstance(target_idx, list):
+        # Calculate mean forecast across all affected nodes for the summary
+        origin_forecast = pred_ratios[target_idx].mean(axis=0) * base_price
+        origin_display_name = "GLOBAL (Mean Impact)"
+    else:
+        origin_forecast = pred_ratios[target_idx] * base_price
+        origin_display_name = market_names[target_idx]
 
     result = {
         "features": features_json,
-        "origin_name": market_names[target_idx],
+        "origin_name": origin_display_name,
         "origin_forecast": origin_forecast.tolist(),
         "served_areas": [],
     }
 
-    # 7. PROPAGATE TO NEIGHBORS
-    if adj.shape[0] > target_idx:
+    # 7. PROPAGATE TO NEIGHBORS (Only for single-node shocks)
+    if not isinstance(target_idx, list) and adj.shape[0] > target_idx:
         row = adj[target_idx]
         connections = sorted(list(zip(row.indices, row.data)), key=lambda x: x[1], reverse=True)
         top_neighbors = [idx for idx, weight in connections[:5]]
