@@ -286,21 +286,51 @@ def infer_routes(commodity: str):
         print(f"❌ No data for {commodity}. Exiting.")
         return
 
-    # 2. Build pivot + filter active mandis
+    # 2. Build pivot for all active mandis (full history, for correlation)
     pivot = build_pivot(df, min_days=MIN_DAYS_FOR_GRAPH)
     if pivot.empty or pivot.shape[1] < 2:
         print("❌ Not enough mandis after filtering. Exiting.")
         return
 
-    market_names = pivot.columns.tolist()
-    N = len(market_names)
-
-    # 3. Save the index file
+    # 3. NODE LIST — single source of truth is the index file written by
+    #    prepare_commodity.py. If it exists, use exactly those nodes in that
+    #    order. If it doesn't exist yet, fall back to the correlation-filtered
+    #    list and write it.
     idx_path = f"mandi_adjacency_index_{commodity.lower()}.txt"
-    with open(idx_path, "w") as f:
-        for name in market_names:
-            f.write(f"{name}\n")
-    print(f"\n✅ Index saved: {idx_path}  ({N} mandis)")
+
+    if os.path.exists(idx_path):
+        with open(idx_path) as f:
+            market_names = [line.strip() for line in f if line.strip()]
+        print(f"✅ Using existing index from prepare_commodity.py: "
+              f"{idx_path}  ({len(market_names)} nodes)")
+
+        # Restrict the correlation pivot to exactly these mandis.
+        # Some may be absent from the full-history pivot (too sparse for
+        # correlation but still kept in graph via spatial imputation) —
+        # those get zero-correlation rows/cols which means no edges, which
+        # is correct (isolated node, relies on message passing from neighbors).
+        available = [m for m in market_names if m in pivot.columns]
+        missing   = len(market_names) - len(available)
+        if missing > 0:
+            print(f"   ℹ️  {missing} index mandis absent from correlation data "
+                  f"— they will be isolated nodes in the graph.")
+        # Reindex pivot to match index order; missing cols become NaN columns
+        pivot = pivot.reindex(columns=market_names)
+        # Fill NaN columns with 0 so correlation math doesn't break
+        pivot = pivot.fillna(0.0)
+    else:
+        # prepare_commodity.py hasn't been run yet — write index from
+        # correlation-filtered mandis and warn the user
+        market_names = pivot.columns.tolist()
+        with open(idx_path, "w") as f:
+            for name in market_names:
+                f.write(f"{name}\n")
+        print(f"⚠️  No existing index found. Wrote new index: "
+              f"{idx_path}  ({len(market_names)} nodes)")
+        print(f"   Run prepare_commodity.py --commodity {commodity} after this "
+              f"to rebuild matrices aligned to this index.")
+
+    N = len(market_names)
 
     # 4. Compute lagged correlation
     corr_matrix = compute_lagged_correlation(pivot, lag=LAG_DAYS)
