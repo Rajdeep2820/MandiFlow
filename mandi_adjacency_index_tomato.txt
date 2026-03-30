@@ -1,15 +1,11 @@
 Abohar
 Achalda
-Achnera
 Adampur
 Agra
-Ahmedabad (Chimanbhai Patal Market Vasana)
+Ahmedabad
 Ahmednagar
 Ajmer (F&V)
-Ajnala
-Ajuha
 Akbarpur
-Akole
 Alappuzha
 Aligarh
 Alipurduar
@@ -20,76 +16,63 @@ Ambala Cantt.
 Amritsar (Amritsar Mewa Mandi)
 Amroha
 Anand (Veg,Yard,Anand)
-Anandnagar
 Anandpur Sahib
 Anchal
 Angamaly
 Angul
 Angul (Jarapada)
-Anwala
+Ankleshwar
 Arasikere
 Asandh
 Asansol
-Atarra
 Athirampuzha
 Attabira
-Auraiya
+Attingal
 Azadpur
-Azamgarh
 Badayoun
-Bagalakot
 Baghapurana
+Bahadajholla
 Bahraich
 Balachaur
 Ballabhgarh
-Ballia
-Balrampur
 Balugaon
 Bampada
 Banda
 Banga
-Bangalore
 Bangarmau
-Bankura Sadar
+Bangarpet
+Banki
 Banur
-Bara Bazar (Posta Bazar)
 Barabanki
 Barara
-Barasat
 Baraut
 Bareilly
 Bargarh
 Bargarh (Barapalli)
 Baripada
 Barnala
-Baruipur (Canning)
 Barwala
 Barwala (Hisar)
 Bassi Pathana
-Basti
 Batala
 Bathinda
-Belacoba
-Belgaum
 Betnoti
 Bhadrak
 Bhagta Bhai Ka
 Bhanjanagar
 Bharuch
-Bhavnagar
 Bhawanigarh
 Bhawanipatna
-Bhucho
 Bhuntar
-Bijapur
 Bijnaur
 Bikaner (F&V)
 Bilaspur
+Bilga
 Bilimora
-Bindki
-Bishnupur (Bankura)
+Binny Mill (F&V), Bangalore
+Bishalgarh
 Bolangir
-Bolpur
+Bonai
 Boudh
 Bowenpally
 Budalada
@@ -101,125 +84,93 @@ Chalakudy
 Chamaraj Nagar
 Chamba
 Chamkaur Sahib
-Champua
+Champaknagar
 Chandabali
-Chandausi
-Chandoli
 Chandrapur (Ganjwad)
-Chandvad
-Charra
+Channapatana
 Chathanoor
 Chattrapati Sambhajinagar
 Chavakkad
 Chelakkara
 Chengannur
 Cherthala
-Chhachrauli
-Chhibramau
 Chickkaballapura
 Chikkamagalore
 Chintamani
 Chittorgarh
-Chitwadagaon
 Chomu (F&V)
-Chorichora
+Coochbehar
 Dadri
 Dahod (Veg. Market)
 Dasuya
 Davangere
 Deesa (Deesa Veg Yard)
 Dehradoon
+Dera Baba Nanak
 Dera Bassi
-Devala
-Devariya
-Dhand
 Dhanotu (Mandi)
 Dharamkot
-Dharashiv
-Dhariwal
 Dhenkanal
-Dhule
+Dhupguri
 Dhuri
-Digapahandi
 Dinanagar
-Dindori (Vani)
 Divai
+Doddaballa Pur
 Doraha
 Dudhansadhan
-Dudhi
 Dungurapalli
 Durgapur
-English Bazar
 Ernakulam
 Etah
 Etawah
 Ettumanoor
 Faizabad
 Faridkot
-Farukhabad
 Fatehabad
 Fatehpur
-Fatehpur Sikri
 Fazilka
-Ferozepur Cantt.
 Firozabad
 Firozepur City
-Gadaura
-Gangoh
+Gadhwah
 Garh Shankar
-Gazipur
 Ghanaur
 Gharaunda
 Ghaziabad
-Ghiraur
+Ghoti
 Giddarbaha
-Giridih
 Godabhaga
 Gohana
-Gonda
-Gondal
 Gorakhpur
 Goraya
 Gowribidanoor
 Gudimalkapur
-Gulavati
-Gumla
 Gundlupet
+Gunpur
 Gurdaspur
 Gurgaon
 Guru Har Sahai
 Haathras
 Haatpipliya
-Habra
 Haldwani
 Hamirpur
 Hamirpur (Nadaun)
-Hansi
 Hapur
 Hardoi
 Haridwar Union
 Harippad
-Hasanpur
 Hassan
 Hindol
 Hinjilicut
 Hissar
+Honnali
 Hoshiarpur
 Hospet
-Howly
-Hubli (Amaragol)
-Hyderabad (F&V)
-Iamailabad
-Imphal
-Indapur
+Ibrahimputnam
 Indore (F&V)
 Irinjalakkuda
-Jafarganj
 Jagadhri
-Jagnair
 Jagraon
 Jahangirabad
-Jaipur (F&V)
 Jajpur
 Jakhal
 Jalalabad
@@ -228,49 +179,33 @@ Jaleswar
 Jalgaon
 Jalore
 Jalpaiguri Sadar
-Jamakhandi
-Jamkhed
-Jamshedpur
-Jasra
 Jasvantnagar
-Jatni
-Jaunpur
-Jayas
-Jetpur (Dist.Rajkot)
 Jhajjar
 Jhansi
-Jharsuguda
 Jind
-Jodhpur (F&V)
-Junnar
-Junnar (Alephata)
-Junnar (Otur)
+Jodhpur (F&V)(Paota)
+Jowai
 K.R. Pet
-Kada
-Kadur
-Kalapipal
+K.R.Nagar
+Kalikiri
 Kallachi
+Kalmeshwar
 Kalna
-Kalvan
 Kalyan
-Kalyani
 Kamakhyanagar
 Kamthi
+Kanakapura
 Kangra
 Kangra (Jassour)
 Kanjangadu
 Kanjirappally
-Kannauj
-Kannur
 Kanpur (Grain)
+Kantabaji
 Kapadvanj
-Kapurthala
 Karad
-Karvi
 Kasganj
-Kashipur
+Kasinagar
 Kathua
-Katwa
 Kayamkulam
 Kendrapara
 Keonjhar
@@ -278,7 +213,6 @@ Keonjhar (Dhekikote)
 Keshopur
 Kesinga
 Khair
-Khairagarh
 Khamano
 Khanauri
 Khanna
@@ -290,16 +224,15 @@ Khed (Chakan)
 Khunthabandha
 Khurja
 Kicchha
-Koderma
 Kodungalloor
 Koduvayoor
 Kolar
 Kolhapur
 Kollam
-Konch
+Kollengode
 Kondotty
-Kopaganj
-Kopargaon
+Koraput
+Koraput (Semilguda)
 Kosikalan
 Kota (F&V)
 Kotadwara
@@ -308,104 +241,85 @@ Kotkapura
 Kottakkal
 Kottayam
 Kullu
+Kuppam
 Kurali
-Kurnool
 Kuruppanthura
 Ladwa
 Lakhimpur
-Lalganj
 Lalitpur
 Lalru
-Lamlong Bazaar
-Lasalgaon
-Lasalgaon (Niphad)
-Lasur Station
 Lehra Gaga
-Lonand
+Lohian Khas
 Lucknow
 Ludhiana
 Machhiwara
+Madanapalli
 Madhavapuram
-Mahoba
-Mahuva (Station Road)
 Mainpuri
-Makhu
-Malegaon
 Malerkotla
-Malkapur
+Malkanagiri
 Malout
 Malur
 Mamdot
-Manchar
 Mandi (Mandi)
-Mandsaur
+Mandi (Takoli)
+Mangal Wedha
 Manjeri
-Manmad
 Mansa
-Mapusa
+Mansa (Manas Veg Yard)
 Mathura
-Mauranipur
-Mawana
 Meerut
 Meham
 Mehsana (Mehsana Veg)
-Mirzapur
-Moga
+Memari
 Mohindergarh
 Moovattupuzha
 Morbi
 Morinda
-Moth
 Mukerian
 Mukerian (Talwara)
 Mukkom
 Muktsar
+Mulabagilu
+Mulakalacheruvu
 Mumbai
 Muradabad
 Mustafabad
 Muzzafarnagar
 Mysore (Bandipalya)
-Naanpara
 Nabha
-Nadia
-Nagpur
+Nagamangala
 Nahan
-Najibabad
-Nandgaon
 Naraingarh
 Narnaul
 Narnaund
 Narwal Jammu (F&V)
 Narwana
 Nasik
-Naugarh
-Nautnava
-Nawabganj
+Navapur
 Nawan Shahar (Subzi Mandi)
 Nawarangpur
-Nedumkandam
-Neemuch
-Newasa (Ghodegaon)
-Nihal Singh Wala
+Noor Mehal
 Orai
-P.O. Uparhali Guwahati
+Padampur
 Padra
 Pala
 Palakkad
+Palamaner
 Palampur
 Palayam
 Palwal
 Pampady
 Pandharpur
 Panipat
+Panisagar
+Panposh
+Panvel
 Paonta Sahib
 Parappanangadi
 Parlakhemundi
-Parner
-Partaval
-Pataudi
+Patan
 Pathankot
-Pathardi
 Patiala
 Pattambi
 Patti
@@ -415,133 +329,103 @@ Perambra
 Perinthalmanna
 Perumbavoor
 Phagwara
-Phaltan
 Phillaur (Apra Mandi)
+Piler
 Pilibhit
 Pimpalgaon
-Pimpalgaon Baswant (Saykheda)
 Piravam
 Pratapgarh
-Pukharayan
+Punalur
 Pune
 Pune (Khadiki)
 Pune (Pimpri)
+Punganur
 Purulia
-Quadian
 Quilandy
 Radaur
-Rahata
-Rahuri
-Rahuri (Vambori)
 Raibareilly
-Raichur
 Raikot
-Rajkot
 Rajpura
 Raman
+Ramanagara
 Ramkrishanpur (Howrah)
 Ramnagar
-Rampur
-Rampuraphul (Nabha Mandi)
-Ranchi
-Ranebennur
 Rania
 Ratia
-Rayagada
+Rayagada (Muniguda)
 Rewari
 Rishikesh
-Robertsganj
-Rohtak
 Roorkee
-Ropar
 Rudrapur
-Rura
-Sadasivpet
 Sadhaura
 Safidon
 Saharanpur
-Sahiyapur
 Sahnewal
-Sailana
-Sakhigopal
 Samalkha
 Samana
 Sambhal
 Sampla
-Samrala
-Samsi
 Sangamner
-Sangli (Phale, Bhajipura Market)
 Sangrur
 Santoshgarh
-Saraikela
-Sardhana
-Sardulgarh
+Sarankul
+Saraskana
 Sargipali
-Satana
+Sasthamkotta
 Satara
-Sehjanwa
-Shadabad
+Sealdah Koley Market
+Shadnagar
 Shahabad
 Shahdara
-Shahganj
 Shahjahanpur
 Shahzadpur
 Shamli
-Sheoraphuly
-Shikohabad
-Shimoga
-Shirpur
+Shankarapally
+Shillong
 Shrirampur
-Shujalpur
-Sinner
 Sirhind
 Sirsa
-Sirsaganj
 Sitapur
 Sitarganj
 Siyana
+Sohela
 Sohna
 Solan
 Solapur
 Sonepat
 Sriganganagar (F&V)
+Srinivasapur
 Sultanpur
 Sunam
 Surat
+Talalagir
 Talwandi Sabo
-Tamkuhi road
-Tamluk (Medinipur E)
 Tanda Urmur
 Tarantaran
-Tarikere
+Teliamura
 Thamarassery
 Thanesar
 Thirurrangadi
 Thrippunithura
 Thrissur
-Tilhar
-Tumkur
-Tundla
 Udaipur (F&V)
-Udala
 Udhampur
 Udupi
 Uklana
 Una
 Unnao
 Vadakkenchery
+Vadgaonpeth
 Vadhvan
 Vadodara (Sayajipura)
-Vaijpur
+Vai
 Vamanapuram
-Varanasi
-Vashi New Mumbai
+Vayalapadu
+Vijayawada
 Vikasnagar
-Vilthararoad
-Visavadar
+Vyra
 Wadakkanchery
 Yamuna Nagar
-Yeola
 Zira
 kalanwali
+vadakarapathy
