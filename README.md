@@ -7,7 +7,14 @@
 </p>
 
 <p align="center">
-  Real-time mandi intelligence powered by geospatial analytics, graph learning, and policy-aware simulation.
+  🌐 Real-time mandi intelligence powered by geospatial analytics, graph learning, and policy-aware simulation.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Status-Active-00D9FF?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/Built%20With-PyTorch-blue?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/UI-Streamlit-red?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/Domain-AgriTech-green?style=for-the-badge"/>
 </p>
 
 ---
@@ -29,9 +36,9 @@ Most people do not hear it.
 
 Every single day:
 
-- Prices shift silently
-- Supply chains break quietly
-- Policies ripple invisibly
+* Prices shift silently
+* Supply chains break quietly
+* Policies ripple invisibly
 
 And by the time action is taken, the damage is already done.
 
@@ -58,9 +65,9 @@ Rarely where it is needed most:
 
 MandiFlow is built to answer three questions:
 
-- 👉 What will happen next?
-- 📍 Where will it spread?
-- 📉 How bad will it get?
+* 👉 What will happen next?
+* 📍 Where will it spread?
+* 📉 How bad will it get?
 
 ---
 
@@ -68,15 +75,17 @@ MandiFlow is built to answer three questions:
 
 ## 📊 1. Live Intelligence Layer
 
-- Fetches live commodity data with resilient fallback architecture
-- Maps mandi activity across India with searchable geospatial visualization
-- Surfaces market-level pricing signals instantly
+* Fetches live commodity data with resilient fallback architecture
+* Maps mandi activity across India with searchable geospatial visualization
+* Surfaces market-level pricing signals instantly
+
+---
 
 ## 🔮 2. Predictive Engine
 
-- Uses a hybrid GCN + LSTM architecture
-- Learns both spatial and temporal market relationships
-- Forecasts price movement across multiple horizons
+* Uses a hybrid GCN + LSTM architecture
+* Learns both spatial and temporal market relationships
+* Forecasts price movement across multiple horizons
 
 ```text
 1 Day  -> Immediate reaction
@@ -85,29 +94,35 @@ MandiFlow is built to answer three questions:
 7 Days -> Ripple impact across connected mandis
 ```
 
+---
+
 ## 🌐 3. Ripple Intelligence
 
 Markets are connected.
 
 MandiFlow tracks:
 
-- Which mandis influence others
-- How disruptions propagate through the network
-- Which nearby markets may feel the shock next
+* Which mandis influence others
+* How disruptions propagate through the network
+* Which nearby markets may feel the shock next
+
+---
 
 ## 🧾 4. Policy-to-Prediction Engine
 
 Text -> Signal -> Forecast
 
-- Ingests policy updates, news events, and uploaded documents
-- Extracts structured shock features using Gemini or heuristic fallback logic
-- Converts narrative events into numeric market impact for simulation
+* Ingests policy updates, news events, and uploaded documents
+* Extracts structured shock features using Gemini or heuristic fallback logic
+* Converts narrative events into numeric market impact for simulation
+
+---
 
 ## 🔐 5. Secure Access System
 
-- Firebase email/password authentication
-- Optional Google OAuth
-- Session persistence and refresh logic inside the Streamlit app
+* Firebase email/password authentication
+* Optional Google OAuth
+* Session persistence and refresh logic inside the Streamlit app
 
 ---
 
@@ -259,8 +274,6 @@ GOOGLE_REDIRECT_URI=your_google_redirect_uri
 
 ## Streamlit Secrets Alternative
 
-Create `.streamlit/secrets.toml`:
-
 ```toml
 [firebase]
 api_key = "YOUR_FIREBASE_WEB_API_KEY"
@@ -295,10 +308,10 @@ Not just research.
 
 MandiFlow is:
 
-- A real-world decision system
-- A spatial + temporal market intelligence engine
-- A scenario-based forecasting platform
-- A bridge between raw data and early action
+* A real-world decision system
+* A spatial + temporal market intelligence engine
+* A scenario-based forecasting platform
+* A bridge between raw data and early action
 
 ---
 
@@ -339,11 +352,11 @@ The long-term goal is simple:
 
 # 🌱 Future Expansion
 
-- Real-time logistics intelligence
-- AI anomaly alerts
-- Multi-language policy and news ingestion
-- Mobile-first market intelligence experience
-- Stronger commodity-specific deep forecasting
+* Real-time logistics intelligence
+* AI anomaly alerts
+* Multi-language policy and news ingestion
+* Mobile-first market intelligence experience
+* Stronger commodity-specific deep forecasting
 
 ---
 
@@ -367,15 +380,15 @@ We don’t build dashboards.
 
 We build systems that
 **see what others miss**
-and **act before others react**.
+and **act before others react**
 
 ---
 
-<p align="left">
-  ⭐  If this project made you think differently, consider starring it. 
+<p align="center">
+  ⭐ If this project made you think differently, consider starring it.
 </p>
 
-<p align="left">
+<p align="center">
   <strong>
 The edge isn’t in reacting faster — it’s in knowing earlier.
   </strong>
