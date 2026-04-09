@@ -7,35 +7,27 @@ import time
 import argparse
 import os
 
+
 def train(commodity="ONION", limit=None, epochs=50, lr=0.001):
     # 1. Pipeline Setup
     device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
     print(f"🚀 Training for {commodity} on Hardware: {device}")
     
-    # Ensure dataset handles internal scaling/normalization
     dataset = MandiParquetDataset("mandi_master_data.parquet", commodity=commodity)
-    
-    # Model (7 trailing days -> 4 future days)
-    # node_features=7 (Daily price history)
     model = MandiFlowNet(node_features=7, hidden_dim=64, output_dim=4).to(device)
 
-    # --- ADD THESE 3 LINES HERE ---
     weights_path = f"mandiflow_gcn_lstm_{commodity.lower()}.pth"
     if os.path.exists(weights_path):
-        model.load_state_dict(torch.load(weights_path, map_location=device))
-        print(f"🔄 Resuming training from existing brain state: {weights_path}")
-# ------------------------------
+        # Use weights_only=True for security and compatibility
+        model.load_state_dict(torch.load(weights_path, map_location=device, weights_only=True))
+        print(f"🔄 Resuming training from: {weights_path}")
     
-    # Optimizer with Weight Decay to prevent overfitting
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
-    # HubberLoss is more robust to "outliers" (random price spikes) than MSE
     criterion = nn.HuberLoss() 
     
     print(f"Initiating historical data stream for {commodity}...")
-    
     best_loss = float('inf')
 
-    # 2. Training Loop
     try:
         for epoch in range(1, epochs + 1):
             model.train()
@@ -44,48 +36,50 @@ def train(commodity="ONION", limit=None, epochs=50, lr=0.001):
             start_time = time.time()
             
             for batch_graph in dataset:
+                # 1. MOVE .to(device) UP
+                batch_graph = batch_graph.to(device) 
+
+                # 2. REMOVE THE allclose CHECK. 
+                # Even if prices are the same, the model needs to learn that "No Change" is a valid prediction.
+
                 optimizer.zero_grad()
                 
-                # Move to GPU (MPS)
-                batch_graph = batch_graph.to(device) 
+                # 3. ROBUST BASELINE
+                # We use the last known price to normalize the scale
+                base_prices = batch_graph.x[:, -1].unsqueeze(1).detach().clamp(min=1.0)
                 
-                # Normalize input locally (Scale by last day's price)
-                # This helps the model learn 'Percentage shifts' instead of raw numbers
-                base_prices = batch_graph.x[:, -1].unsqueeze(1) + 1e-5
+                # Normalize data (Scale 0 to 2 usually)
                 x_norm = batch_graph.x / base_prices
                 y_norm = batch_graph.y / base_prices
                 
-                # Forward pass
+                # 4. FORWARD PASS
                 predictions = model(x_norm, batch_graph.edge_index, batch_graph.edge_weight)
                 
-                # Calculate loss based on relative shifts
+                # 5. LOSS + GRADIENT CLIPPING
                 loss = criterion(predictions, y_norm)
                 
+                if torch.isnan(loss) or torch.isinf(loss):
+                    continue
+
                 loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=0.5) # Tighter clipping
                 optimizer.step()
                 
                 epoch_loss += loss.item()
                 count += 1
                 
-                if count % 100 == 0:
-                    avg_loss = epoch_loss / count
-                    elapsed = time.time() - start_time
-                    print(f"Epoch [{epoch}/{epochs}] | Batch {count} | Avg Loss: {avg_loss:.4f} | {100/(time.time()-start_time + 1e-5):.1f} b/s")
-                    start_time = time.time()
+                # print updates more frequently to see it working
+                if count % 10 == 0: 
+                    print(f"Epoch [{epoch}/{epochs}] | Batch {count} | Loss: {loss.item():.6f}")
 
-                if limit and count >= limit: break
-
-            # Save "Best" version
-            current_avg = epoch_loss / count
-            if current_avg < best_loss:
-                best_loss = current_avg
+            # Save Checkpoints
+            if count > 0 and (epoch_loss / count) < best_loss:
+                best_loss = epoch_loss / count
                 torch.save(model.state_dict(), f"mandiflow_gcn_lstm_{commodity.lower()}_best.pth")
 
     except KeyboardInterrupt:
         print("\n🛑 Manual interrupt. Saving checkpoint...")
 
-    # 3. Final Save
-    weights_path = f"mandiflow_gcn_lstm_{commodity.lower()}.pth"
     torch.save(model.state_dict(), weights_path)
     print(f"✅ Training Complete. Model saved to {weights_path}")
 
