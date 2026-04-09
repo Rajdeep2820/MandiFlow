@@ -1,0 +1,16 @@
+streamlit
+pandas
+numpy
+pyarrow
+requests
+folium
+streamlit-folium
+altair
+scipy
+torch
+google-genai
+pdfplumber
+matplotlib
+seaborn
+scikit-learn
+rapidfuzz
