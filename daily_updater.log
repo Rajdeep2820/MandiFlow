@@ -1,0 +1,275 @@
+2026-03-22 19:32:42,966 - INFO - 🚀 Waking up for automated fetch: 22/03/2026
+2026-03-22 19:32:43,295 - INFO - ✅ Extracted 0 official records from data.gov.in
+2026-03-22 19:32:43,295 - INFO - ℹ️ No records found on government server for today. Markets might be closed today.
+2026-03-22 20:15:40,426 - INFO - 📖 Reading Parquet Dictionary to determine Catch-Up window...
+2026-03-22 23:55:10,130 - INFO - 📖 Reading Parquet Dictionary to determine Catch-Up window...
+2026-03-24 01:17:47,659 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-24 01:17:49,408 - INFO - 🚀 Waking up for Catch-Up fetch! (21/03/2026 -> 24/03/2026)
+2026-03-24 01:17:50,350 - INFO - ✅ Fetched 0      total records for 21/03/2026 (1 page(s))
+2026-03-24 01:17:51,400 - INFO - ✅ Fetched 0      total records for 22/03/2026 (1 page(s))
+2026-03-24 01:17:52,596 - INFO - ✅ Fetched 0      total records for 23/03/2026 (1 page(s))
+2026-03-24 01:17:53,841 - INFO - ✅ Fetched 0      total records for 24/03/2026 (1 page(s))
+2026-03-24 01:17:54,346 - INFO - ℹ️ No records found on government server for any new days. Markets might be closed.
+2026-03-24 23:55:03,459 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-24 23:55:07,987 - INFO - 🚀 Waking up for Catch-Up fetch! (21/03/2026 -> 24/03/2026)
+2026-03-24 23:55:42,607 - ERROR - ⚠️ Network Exception for 21/03/2026 offset=0: HTTPSConnectionPool(host='api.data.gov.in', port=443): Read timed out.
+2026-03-24 23:55:42,608 - INFO - ✅ Fetched 0      total records for 21/03/2026 (1 page(s))
+2026-03-24 23:55:48,794 - INFO - ✅ Fetched 10000  total records for 22/03/2026 (2 page(s))
+2026-03-24 23:56:32,877 - ERROR - ⚠️ Network Exception for 23/03/2026 offset=0: HTTPSConnectionPool(host='api.data.gov.in', port=443): Read timed out.
+2026-03-24 23:56:32,879 - INFO - ✅ Fetched 0      total records for 23/03/2026 (1 page(s))
+2026-03-24 23:57:15,779 - INFO - ✅ Fetched 10000  total records for 24/03/2026 (2 page(s))
+2026-03-24 23:57:16,472 - INFO - 📖 Loading only ID columns for label-encoding lookup...
+2026-03-24 23:58:30,962 - INFO - ➕ Auto-mapped 7 new 'Market' entries into Matrix IDs!
+2026-03-24 23:58:41,724 - INFO - ➕ Auto-mapped 8 new 'Commodity' entries into Matrix IDs!
+2026-03-24 23:58:44,287 - INFO - 🔗 Streaming 20000 new rows into Parquet (batch append)...
+2026-03-25 13:33:16,603 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-25 13:33:18,392 - INFO - 🚀 Waking up for Catch-Up fetch! (21/03/2026 -> 25/03/2026)
+2026-03-25 13:33:29,397 - INFO - ✅ Fetched 10000  total records for 21/03/2026 (2 page(s))
+2026-03-25 13:34:12,388 - ERROR - ⚠️ Network Exception for 22/03/2026 offset=0: HTTPSConnectionPool(host='api.data.gov.in', port=443): Read timed out.
+2026-03-25 13:34:12,390 - INFO - ✅ Fetched 0      total records for 22/03/2026 (1 page(s))
+2026-03-25 13:34:41,069 - INFO - ✅ Fetched 10000  total records for 23/03/2026 (2 page(s))
+2026-03-25 13:34:56,532 - INFO - ✅ Fetched 10000  total records for 24/03/2026 (2 page(s))
+2026-03-25 13:35:11,533 - INFO - ✅ Fetched 10000  total records for 25/03/2026 (2 page(s))
+2026-03-25 13:35:12,113 - INFO - 📖 Loading only ID columns for label-encoding lookup...
+2026-03-25 13:36:26,106 - INFO - ➕ Auto-mapped 4 new 'Market' entries into Matrix IDs!
+2026-03-25 13:36:30,669 - INFO - ➕ Auto-mapped 5 new 'Commodity' entries into Matrix IDs!
+2026-03-25 13:36:32,934 - INFO - 🔗 Streaming 40000 new rows into Parquet (batch append)...
+2026-03-25 13:39:23,920 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-25 13:39:25,744 - INFO - 🚀 Waking up for Catch-Up fetch! (21/03/2026 -> 25/03/2026)
+2026-03-25 13:39:35,982 - INFO - ✅ Fetched 10000  total records for 21/03/2026 (2 page(s))
+2026-03-25 13:39:45,294 - INFO - ✅ Fetched 10000  total records for 22/03/2026 (2 page(s))
+2026-03-25 13:39:54,754 - INFO - ✅ Fetched 10000  total records for 23/03/2026 (2 page(s))
+2026-03-25 13:40:09,139 - INFO - ✅ Fetched 10000  total records for 24/03/2026 (2 page(s))
+2026-03-25 13:40:19,250 - INFO - ✅ Fetched 10000  total records for 25/03/2026 (2 page(s))
+2026-03-25 13:40:19,866 - INFO - 📖 Loading only ID columns for label-encoding lookup...
+2026-03-25 13:41:26,589 - INFO - ➕ Auto-mapped 4 new 'Market' entries into Matrix IDs!
+2026-03-25 13:41:33,174 - INFO - ➕ Auto-mapped 5 new 'Commodity' entries into Matrix IDs!
+2026-03-25 13:41:35,543 - INFO - 🔗 Streaming 50000 new rows into Parquet (batch append)...
+2026-03-25 13:59:23,146 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-25 13:59:24,962 - INFO - 🚀 Waking up for Catch-Up fetch! (21/03/2026 -> 25/03/2026)
+2026-03-25 13:59:34,391 - INFO - ✅ Fetched 10000  total records for 21/03/2026 (2 page(s))
+2026-03-25 13:59:47,909 - INFO - ✅ Fetched 10000  total records for 22/03/2026 (2 page(s))
+2026-03-25 13:59:58,251 - INFO - ✅ Fetched 10000  total records for 23/03/2026 (2 page(s))
+2026-03-25 14:00:09,658 - INFO - ✅ Fetched 10000  total records for 24/03/2026 (2 page(s))
+2026-03-25 14:00:18,320 - INFO - ✅ Fetched 10000  total records for 25/03/2026 (2 page(s))
+2026-03-25 14:00:18,933 - INFO - 📖 Loading only ID columns for label-encoding lookup...
+2026-03-25 14:00:59,084 - INFO - ➕ Auto-mapped 4 new 'Market' entries into Matrix IDs!
+2026-03-25 14:01:00,964 - INFO - ➕ Auto-mapped 5 new 'Commodity' entries into Matrix IDs!
+2026-03-25 14:01:02,340 - INFO - 🔗 Streaming 50000 new rows into Parquet (batch append)...
+2026-03-25 14:01:28,376 - INFO - 🎉 SUCCESS! Parquet updated. Appended 50000 rows. Total: 75562905
+2026-03-25 14:22:29,615 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-25 14:22:31,469 - INFO - ✅ Database is entirely up-to-date! No action needed.
+2026-03-25 14:32:52,699 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-25 14:32:54,474 - INFO - 🚀 Waking up for Catch-Up fetch! (21/03/2026 -> 25/03/2026)
+2026-03-25 14:33:07,228 - INFO - ✅ Fetched 13087  total records for 21/03/2026 (2 page(s))
+2026-03-25 14:33:23,820 - INFO - ✅ Fetched 12437  total records for 22/03/2026 (2 page(s))
+2026-03-25 14:33:51,889 - ERROR - ⚠️ Network Exception for 23/03/2026 offset=10000: ("Connection broken: ConnectionResetError(54, 'Connection reset by peer')", ConnectionResetError(54, 'Connection reset by peer'))
+2026-03-25 14:33:51,890 - ERROR - Halting catch-up fetch to prevent data gap!
+2026-03-25 14:47:20,180 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-25 14:47:22,031 - INFO - 🚀 Waking up for Catch-Up fetch! (21/03/2026 -> 25/03/2026)
+2026-03-25 14:48:05,318 - INFO - ✅ Fetched 13087  total records for 21/03/2026 (2 page(s))
+2026-03-25 14:48:16,560 - INFO - ✅ Fetched 12437  total records for 22/03/2026 (2 page(s))
+2026-03-25 14:48:33,136 - INFO - ✅ Fetched 19796  total records for 23/03/2026 (2 page(s))
+2026-03-25 14:48:40,954 - ERROR - ⚠️ Network Exception for 24/03/2026 offset=0: ("Connection broken: ConnectionResetError(54, 'Connection reset by peer')", ConnectionResetError(54, 'Connection reset by peer'))
+2026-03-25 14:48:40,955 - ERROR - Halting catch-up fetch to prevent data gap!
+2026-03-25 14:54:00,743 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-25 14:54:02,586 - INFO - 🚀 Waking up for Catch-Up fetch! (21/03/2026 -> 25/03/2026)
+2026-03-25 14:54:24,153 - INFO - ✅ Fetched 13087  total records for 21/03/2026 (2 page(s))
+2026-03-25 14:56:01,236 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-25 14:56:03,280 - INFO - 🚀 Waking up for Catch-Up fetch! (21/03/2026 -> 25/03/2026)
+2026-03-25 14:56:19,353 - INFO - ✅ Fetched 13087  total records for 21/03/2026 (2 page(s))
+2026-03-25 14:56:34,183 - INFO - ✅ Fetched 12437  total records for 22/03/2026 (2 page(s))
+2026-03-25 14:56:56,342 - INFO - ✅ Fetched 19796  total records for 23/03/2026 (2 page(s))
+2026-03-25 14:57:24,754 - INFO - ✅ Fetched 17821  total records for 24/03/2026 (2 page(s))
+2026-03-25 14:57:34,419 - INFO - ✅ Fetched 2415   total records for 25/03/2026 (1 page(s))
+2026-03-25 14:57:35,098 - INFO - 📖 Loading only ID columns for label-encoding lookup...
+2026-03-25 14:58:09,502 - INFO - ➕ Auto-mapped 17 new 'Market' entries into Matrix IDs!
+2026-03-25 14:58:12,492 - INFO - 🔗 Streaming 65556 new rows into Parquet (batch append)...
+2026-03-25 14:58:35,303 - INFO - 🎉 SUCCESS! Parquet updated. Appended 65556 rows. Total: 75578461
+2026-03-26 23:55:02,928 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-26 23:55:07,252 - INFO - 🚀 Waking up for Catch-Up fetch! (25/03/2026 -> 26/03/2026)
+2026-03-26 23:55:54,539 - ERROR - ⚠️ Network Exception for 25/03/2026 offset=0: HTTPSConnectionPool(host='api.data.gov.in', port=443): Read timed out.
+2026-03-26 23:55:54,540 - ERROR - Halting catch-up fetch to prevent data gap!
+2026-03-27 01:36:40,534 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-27 01:36:42,498 - INFO - 🚀 Waking up for Catch-Up fetch! (25/03/2026 -> 27/03/2026)
+2026-03-27 01:36:51,776 - INFO - ✅ Fetched 17293  total records for 25/03/2026 (2 page(s))
+2026-03-27 01:36:53,671 - INFO - ✅ Fetched 1      total records for 26/03/2026 (1 page(s))
+2026-03-27 01:36:55,088 - INFO - ✅ Fetched 0      total records for 27/03/2026 (1 page(s))
+2026-03-27 01:36:55,653 - INFO - 📖 Loading only ID columns for label-encoding lookup...
+2026-03-27 01:37:32,089 - INFO - ➕ Auto-mapped 4 new 'Market' entries into Matrix IDs!
+2026-03-27 01:37:37,211 - INFO - 🔗 Streaming 17294 new rows into Parquet (batch append)...
+2026-03-27 01:37:59,434 - INFO - 🎉 SUCCESS! Parquet updated. Appended 17294 rows. Total: 75593340
+2026-03-27 23:55:02,349 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-27 23:55:06,662 - INFO - 🚀 Waking up for Catch-Up fetch! (26/03/2026 -> 27/03/2026)
+2026-03-27 23:55:40,861 - ERROR - ⚠️ Network Exception for 26/03/2026 offset=0: HTTPSConnectionPool(host='api.data.gov.in', port=443): Read timed out.
+2026-03-27 23:55:40,863 - ERROR - Halting catch-up fetch to prevent data gap!
+2026-03-28 00:41:34,453 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-28 00:41:36,475 - INFO - 🚀 Waking up for Catch-Up fetch! (26/03/2026 -> 28/03/2026)
+2026-03-28 00:42:06,779 - ERROR - ⚠️ Network Exception for 26/03/2026 offset=0: HTTPSConnectionPool(host='api.data.gov.in', port=443): Read timed out. (read timeout=30)
+2026-03-28 00:42:06,780 - ERROR - Halting catch-up fetch to prevent data gap!
+2026-03-28 00:42:16,729 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-28 00:42:18,618 - INFO - 🚀 Waking up for Catch-Up fetch! (26/03/2026 -> 28/03/2026)
+2026-03-28 00:42:48,812 - ERROR - ⚠️ Network Exception for 26/03/2026 offset=0: HTTPSConnectionPool(host='api.data.gov.in', port=443): Read timed out. (read timeout=30)
+2026-03-28 00:42:48,814 - ERROR - Halting catch-up fetch to prevent data gap!
+2026-03-28 00:49:41,765 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-28 00:49:43,580 - INFO - 🚀 Waking up for Catch-Up fetch! (26/03/2026 -> 28/03/2026)
+2026-03-28 00:50:14,914 - ERROR - ⚠️ Network Exception for 26/03/2026 offset=0: HTTPSConnectionPool(host='api.data.gov.in', port=443): Read timed out.
+2026-03-28 00:50:14,916 - ERROR - Halting catch-up fetch to prevent data gap!
+2026-03-28 00:55:10,811 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-28 00:55:12,738 - INFO - 🚀 Waking up for Catch-Up fetch! (26/03/2026 -> 28/03/2026)
+2026-03-28 00:56:00,495 - ERROR - ⚠️ Network Exception for 26/03/2026 offset=0: HTTPSConnectionPool(host='api.data.gov.in', port=443): Read timed out.
+2026-03-28 00:56:00,497 - ERROR - Halting catch-up fetch to prevent data gap!
+2026-03-28 02:54:36,174 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-28 02:54:37,955 - INFO - 🚀 Waking up for Catch-Up fetch! (26/03/2026 -> 28/03/2026)
+2026-03-28 02:55:13,353 - ERROR - ⚠️ Network Exception for 26/03/2026 offset=0: HTTPSConnectionPool(host='api.data.gov.in', port=443): Read timed out.
+2026-03-28 02:55:13,355 - ERROR - Halting catch-up fetch to prevent data gap!
+2026-03-28 03:04:03,432 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-28 03:04:05,536 - INFO - 🚀 Waking up for Catch-Up fetch! (26/03/2026 -> 28/03/2026)
+2026-03-28 03:04:12,325 - INFO - ✅ Fetched 13546  total records for 26/03/2026 (2 page(s))
+2026-03-28 03:04:13,277 - INFO - ✅ Fetched 1      total records for 27/03/2026 (1 page(s))
+2026-03-28 03:04:14,166 - INFO - ✅ Fetched 0      total records for 28/03/2026 (1 page(s))
+2026-03-28 03:04:14,728 - INFO - 📖 Loading only ID columns for label-encoding lookup...
+2026-03-28 03:04:56,023 - INFO - 📖 Reading Parquet metadata to determine catch-up window (memory-safe)...
+2026-03-28 03:04:57,491 - INFO - 🚀 Waking up for Catch-Up fetch! (26/03/2026 -> 28/03/2026)
+2026-03-28 03:05:04,657 - INFO - ✅ Fetched 13546  total records for 26/03/2026 (2 page(s))
+2026-03-28 03:05:05,525 - INFO - ✅ Fetched 1      total records for 27/03/2026 (1 page(s))
+2026-03-28 03:05:07,546 - INFO - ✅ Fetched 0      total records for 28/03/2026 (1 page(s))
+2026-03-28 03:05:08,107 - INFO - 📖 Loading only ID columns for label-encoding lookup...
+2026-03-28 03:12:30,326 - INFO - 📖 Scanning Parquet metadata for last update...
+2026-03-28 03:12:32,410 - INFO - 🚀 Starting Catch-Up: 2026-03-26 -> 2026-03-28
+2026-03-28 03:12:40,027 - INFO - 📅 26/03/2026: Fetched 13546 records.
+2026-03-28 03:12:40,484 - INFO - 📅 27/03/2026: Fetched 1 records.
+2026-03-28 03:12:40,842 - INFO - 📅 28/03/2026: Fetched 0 records.
+2026-03-28 03:12:40,897 - INFO - 📖 Mapping Matrix IDs (Memory-Safe)...
+2026-03-28 03:13:09,525 - INFO - ➕ New mapping: Added 4 new IDs for Market.
+2026-03-28 03:13:14,163 - INFO - 🔗 Appending 13547 rows to mandi_master_data.parquet...
+2026-03-28 03:16:29,611 - INFO - 📖 Scanning Parquet metadata for last update...
+2026-03-28 03:16:31,480 - INFO - 🚀 Starting Catch-Up: 2026-03-26 -> 2026-03-28
+2026-03-28 03:16:44,380 - INFO - 📅 26/03/2026: Fetched 13546 records.
+2026-03-28 03:16:44,838 - INFO - 📅 27/03/2026: Fetched 1 records.
+2026-03-28 03:16:45,690 - INFO - 📅 28/03/2026: Fetched 0 records.
+2026-03-28 03:16:45,743 - INFO - 📖 Mapping Matrix IDs (Memory-Safe)...
+2026-03-28 03:17:18,496 - INFO - ➕ New mapping: Added 4 new IDs for Market.
+2026-03-28 03:17:20,859 - INFO - 🔗 Appending 13547 rows to mandi_master_data.parquet...
+2026-03-28 03:17:43,328 - INFO - 🎉 SUCCESS! Database updated. New Total: 75606886
+2026-03-29 23:55:03,810 - INFO - 📖 Scanning Parquet metadata for last update...
+2026-03-29 23:55:08,449 - INFO - 🚀 Starting Catch-Up: 2026-03-28 -> 2026-03-29
+2026-03-29 23:55:20,798 - INFO - 📅 28/03/2026: Fetched 13701 records.
+2026-03-29 23:55:21,411 - INFO - 📅 29/03/2026: Fetched 2 records.
+2026-03-29 23:55:21,494 - INFO - 📖 Mapping Matrix IDs (Memory-Safe)...
+2026-03-29 23:56:34,089 - INFO - ➕ New mapping: Added 4 new IDs for Market.
+2026-03-29 23:56:38,740 - INFO - 🔗 Appending 13703 rows to mandi_master_data.parquet...
+2026-03-29 23:57:36,709 - INFO - 🎉 SUCCESS! Database updated. New Total: 75620589
+2026-03-31 23:55:03,501 - INFO - 📖 Scanning Parquet metadata for last update...
+2026-03-31 23:55:08,769 - INFO - 🚀 Starting Catch-Up: 2026-03-30 -> 2026-03-31
+2026-03-31 23:55:19,796 - INFO - 📅 30/03/2026: Fetched 15170 records.
+2026-03-31 23:55:20,222 - INFO - 📅 31/03/2026: Fetched 19 records.
+2026-03-31 23:55:20,432 - INFO - 📖 Mapping Matrix IDs (Memory-Safe)...
+2026-03-31 23:57:02,807 - INFO - ➕ New mapping: Added 7 new IDs for Market.
+2026-03-31 23:57:09,094 - INFO - ➕ New mapping: Added 1 new IDs for Commodity.
+2026-03-31 23:57:11,739 - INFO - 🔗 Appending 15189 rows to mandi_master_data.parquet...
+2026-03-31 23:58:16,482 - INFO - 🎉 SUCCESS! Database updated. New Total: 75635778
+2026-04-01 23:55:03,266 - INFO - 📖 Scanning Parquet metadata for last update...
+2026-04-01 23:55:08,673 - INFO - 🚀 Starting Catch-Up: 2026-04-01 -> 2026-04-01
+2026-04-01 23:55:11,423 - INFO - 📅 01/04/2026: Fetched 3 records.
+2026-04-01 23:55:11,423 - INFO - ℹ️ Gov server returned negligible records (Weekend/Holiday). No update performed.
+2026-04-02 23:55:05,486 - INFO - 📖 Scanning Parquet metadata for last update...
+2026-04-02 23:55:09,984 - INFO - 🚀 Starting Catch-Up: 2026-04-01 -> 2026-04-02
+2026-04-02 23:55:34,343 - INFO - 📅 01/04/2026: Fetched 14996 records.
+2026-04-02 23:55:34,804 - INFO - 📅 02/04/2026: Fetched 1 records.
+2026-04-02 23:55:34,887 - INFO - 📖 Mapping Matrix IDs (Memory-Safe)...
+2026-04-02 23:56:50,471 - INFO - ➕ New mapping: Added 6 new IDs for Market.
+2026-04-02 23:56:55,469 - INFO - 🔗 Appending 14997 rows to mandi_master_data.parquet...
+2026-04-02 23:57:53,124 - INFO - 🎉 SUCCESS! Database updated. New Total: 75650775
+2026-04-03 23:55:02,886 - INFO - 📖 Scanning Parquet metadata for last update...
+2026-04-03 23:55:07,428 - INFO - 🚀 Starting Catch-Up: 2026-04-03 -> 2026-04-03
+2026-04-03 23:55:15,782 - WARNING - ⚠️ Timeout/Network Error on 03/04/2026. Attempt 1
+2026-04-03 23:55:28,887 - WARNING - ⚠️ Timeout/Network Error on 03/04/2026. Attempt 2
+2026-04-03 23:55:41,956 - WARNING - ⚠️ Timeout/Network Error on 03/04/2026. Attempt 3
+2026-04-03 23:55:47,012 - ERROR - ❌ Failed to fetch data for 03/04/2026 after 3 attempts. Halting to prevent gaps.
+2026-04-04 23:55:03,341 - INFO - 📖 Scanning Parquet metadata for last update...
+2026-04-04 23:55:08,052 - INFO - 🚀 Starting Catch-Up: 2026-04-03 -> 2026-04-04
+2026-04-04 23:55:16,191 - WARNING - ⚠️ Timeout/Network Error on 03/04/2026. Attempt 1
+2026-04-04 23:55:29,262 - WARNING - ⚠️ Timeout/Network Error on 03/04/2026. Attempt 2
+2026-04-04 23:55:42,289 - WARNING - ⚠️ Timeout/Network Error on 03/04/2026. Attempt 3
+2026-04-04 23:55:47,355 - ERROR - ❌ Failed to fetch data for 03/04/2026 after 3 attempts. Halting to prevent gaps.
+2026-04-05 23:55:03,671 - INFO - 📖 Scanning Parquet metadata for last update...
+2026-04-05 23:55:08,528 - INFO - 🚀 Starting Catch-Up: 2026-04-03 -> 2026-04-05
+2026-04-05 23:55:16,586 - WARNING - ⚠️ Timeout/Network Error on 03/04/2026. Attempt 1
+2026-04-05 23:55:29,679 - WARNING - ⚠️ Timeout/Network Error on 03/04/2026. Attempt 2
+2026-04-05 23:55:42,786 - WARNING - ⚠️ Timeout/Network Error on 03/04/2026. Attempt 3
+2026-04-05 23:55:47,864 - ERROR - ❌ Failed to fetch data for 03/04/2026 after 3 attempts. Halting to prevent gaps.
+2026-04-06 23:55:03,623 - INFO - 📖 Scanning Parquet metadata for last update...
+2026-04-06 23:55:07,884 - INFO - 🚀 Starting Catch-Up: 2026-04-03 -> 2026-04-06
+2026-04-06 23:55:19,502 - INFO - 📅 03/04/2026: Fetched 16677 records.
+2026-04-06 23:55:27,863 - INFO - 📅 04/04/2026: Fetched 19079 records.
+2026-04-06 23:55:43,264 - INFO - 📅 05/04/2026: Fetched 10605 records.
+2026-04-06 23:55:43,635 - INFO - 📅 06/04/2026: Fetched 28 records.
+2026-04-06 23:55:43,887 - INFO - 📖 Mapping Matrix IDs (Memory-Safe)...
+2026-04-06 23:57:29,394 - INFO - ➕ New mapping: Added 11 new IDs for Market.
+2026-04-06 23:57:33,927 - INFO - ➕ New mapping: Added 1 new IDs for Commodity.
+2026-04-06 23:57:36,359 - INFO - 🔗 Appending 46389 rows to mandi_master_data.parquet...
+2026-04-06 23:58:40,608 - INFO - 🎉 SUCCESS! Database updated. New Total: 75697164
+2026-04-07 23:58:14,193 - INFO - 📖 Scanning Parquet metadata for last update...
+2026-04-08 00:03:24,663 - INFO - 🚀 Starting Catch-Up: 2026-04-07 -> 2026-04-08
+2026-04-08 00:03:25,247 - INFO - 📅 07/04/2026: Fetched 4 records.
+2026-04-08 00:03:25,669 - INFO - 📅 08/04/2026: Fetched 0 records.
+2026-04-08 00:03:25,669 - INFO - ℹ️ Gov server returned negligible records (Weekend/Holiday). No update performed.
+2026-04-08 23:55:03,380 - INFO - 📖 Scanning Parquet metadata for last update...
+2026-04-08 23:55:08,281 - INFO - 🚀 Starting Catch-Up: 2026-04-07 -> 2026-04-08
+2026-04-08 23:56:46,978 - WARNING - ⚠️ Timeout/Network Error on 07/04/2026. Attempt 1
+2026-04-08 23:56:56,664 - INFO - 📅 07/04/2026: Fetched 18393 records.
+2026-04-08 23:56:57,948 - INFO - 📅 08/04/2026: Fetched 11 records.
+2026-04-08 23:56:58,074 - INFO - 📖 Mapping Matrix IDs (Memory-Safe)...
+2026-04-08 23:59:20,330 - INFO - ➕ New mapping: Added 8 new IDs for Market.
+2026-04-08 23:59:30,299 - INFO - ➕ New mapping: Added 1 new IDs for Commodity.
+2026-04-08 23:59:32,806 - INFO - 🔗 Appending 18404 rows to mandi_master_data.parquet...
+2026-04-09 00:00:38,625 - INFO - 🎉 SUCCESS! Database updated. New Total: 75715568
+2026-04-10 23:56:04,234 - INFO - 📖 Scanning Parquet metadata for last update...
+2026-04-10 23:56:08,772 - INFO - 🚀 Starting Catch-Up: 2026-04-09 -> 2026-04-10
+2026-04-10 23:56:08,793 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 1
+2026-04-10 23:56:13,940 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 2
+2026-04-11 00:11:27,032 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 3
+2026-04-11 00:12:25,854 - ERROR - ❌ Failed to fetch data for 09/04/2026 after 3 attempts. Halting to prevent gaps.
+2026-04-11 23:55:05,777 - INFO - 📖 Scanning Parquet metadata for last update...
+2026-04-11 23:55:10,461 - INFO - 🚀 Starting Catch-Up: 2026-04-09 -> 2026-04-11
+2026-04-11 23:55:56,966 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 1
+2026-04-11 23:56:47,431 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 2
+2026-04-11 23:57:51,878 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 3
+2026-04-11 23:57:56,954 - ERROR - ❌ Failed to fetch data for 09/04/2026 after 3 attempts. Halting to prevent gaps.
+2026-04-13 00:02:22,856 - INFO - 📖 Scanning Parquet metadata for last update...
+2026-04-13 00:02:27,404 - INFO - 🚀 Starting Catch-Up: 2026-04-09 -> 2026-04-13
+2026-04-13 00:02:27,433 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 1
+2026-04-13 00:02:40,830 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 2
+2026-04-13 00:02:54,000 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 3
+2026-04-13 00:02:59,141 - ERROR - ❌ Failed to fetch data for 09/04/2026 after 3 attempts. Halting to prevent gaps.
+2026-04-13 23:55:04,174 - INFO - 📖 Scanning Parquet metadata for last update...
+2026-04-13 23:55:09,730 - INFO - 🚀 Starting Catch-Up: 2026-04-09 -> 2026-04-13
+2026-04-13 23:55:56,934 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 1
+2026-04-13 23:57:03,874 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 2
+2026-04-13 23:57:54,122 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 3
+2026-04-13 23:57:59,199 - ERROR - ❌ Failed to fetch data for 09/04/2026 after 3 attempts. Halting to prevent gaps.
+2026-04-15 00:01:19,742 - INFO - 📖 Scanning Parquet metadata for last update...
+2026-04-15 00:01:24,518 - INFO - 🚀 Starting Catch-Up: 2026-04-09 -> 2026-04-15
+2026-04-15 00:01:32,916 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 1
+2026-04-15 00:17:09,379 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 2
+2026-04-15 00:24:20,658 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 3
+2026-04-15 00:24:25,803 - ERROR - ❌ Failed to fetch data for 09/04/2026 after 3 attempts. Halting to prevent gaps.
+2026-04-15 23:55:04,505 - INFO - 📖 Scanning Parquet metadata for last update...
+2026-04-15 23:55:09,075 - INFO - 🚀 Starting Catch-Up: 2026-04-09 -> 2026-04-15
+2026-04-15 23:55:17,305 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 1
+2026-04-15 23:55:30,466 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 2
+2026-04-15 23:55:43,574 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 3
+2026-04-15 23:55:48,651 - ERROR - ❌ Failed to fetch data for 09/04/2026 after 3 attempts. Halting to prevent gaps.
+2026-04-17 23:55:02,101 - INFO - 📖 Scanning Parquet metadata for last update...
+2026-04-17 23:55:06,551 - INFO - 🚀 Starting Catch-Up: 2026-04-09 -> 2026-04-17
+2026-04-17 23:55:14,715 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 1
+2026-04-17 23:55:27,923 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 2
+2026-04-17 23:55:41,130 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 3
+2026-04-17 23:55:46,263 - ERROR - ❌ Failed to fetch data for 09/04/2026 after 3 attempts. Halting to prevent gaps.
+2026-04-18 23:55:04,152 - INFO - 📖 Scanning Parquet metadata for last update...
+2026-04-18 23:55:09,218 - INFO - 🚀 Starting Catch-Up: 2026-04-09 -> 2026-04-18
+2026-04-18 23:55:17,332 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 1
+2026-04-18 23:55:30,601 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 2
+2026-04-18 23:55:43,699 - WARNING - ⚠️ Timeout/Network Error on 09/04/2026. Attempt 3
+2026-04-18 23:55:48,737 - ERROR - ❌ Failed to fetch data for 09/04/2026 after 3 attempts. Halting to prevent gaps.

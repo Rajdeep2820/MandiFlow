@@ -12,7 +12,7 @@ URL = "https://api.data.gov.in/resource/35985678-0d79-46b4-9ed6-6f13308a1d24"
 HEADERS = {'User-Agent': 'Mozilla/5.0'}
 
 start_date = datetime.date(2026, 4, 8)
-end_date = datetime.date(2026, 4, 18)
+end_date = datetime.date(2026, 4, 19)
 
 delta = datetime.timedelta(days=1)
 curr_date = start_date

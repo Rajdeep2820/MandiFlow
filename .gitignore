@@ -3,8 +3,5 @@ __pycache__/
 .DS_Store
 MinorP Dataset/
 *.parquet
-*.npz
-*.log
-*.pth
 .env
 .streamlit/secrets.toml
