@@ -129,28 +129,28 @@ def fetch_agmarknet_data(commodity: str = "Onion"):
     Primary data gateway for the MandiFlow dashboard.
 
     Priority order:
-      1. Master Parquet  — freshest data, updated nightly by the cron job
-      2. Live API        — fallback if parquet is missing or has no recent data
+      1. Live API        — always try for today's freshest data first
+      2. Master Parquet  — fallback if API is down or returns no data
       3. mini_fallback.csv — last resort offline cache
 
     Returns: (pd.DataFrame, bool) -> (Data, Is_Live_Status)
     """
 
-    # --- SOURCE 1: Master Parquet (nightly cron-updated, always freshest) ---
-    parquet_df = fetch_from_parquet(commodity)
-    if not parquet_df.empty:
-        print(f"✅ Serving from Master Parquet | {len(parquet_df)} rows for {commodity}")
-        return parquet_df, True
-
-    print(f"⚠️ Parquet returned no data for '{commodity}', falling back to live API...")
-
-    # --- SOURCE 2: Live Agmarknet API ---
+    # --- SOURCE 1: Live Agmarknet API (freshest — today's data) ---
     api_df = fetch_from_api(commodity)
     if not api_df.empty:
         print(f"🌐 Serving from Live API | {len(api_df)} rows for {commodity}")
         return api_df, True
 
-    print(f"⚠️ API also returned no data. Falling back to offline cache...")
+    print(f"⚠️ Live API returned no data for '{commodity}', falling back to Master Parquet...")
+
+    # --- SOURCE 2: Master Parquet (nightly cron-updated) ---
+    parquet_df = fetch_from_parquet(commodity)
+    if not parquet_df.empty:
+        print(f"✅ Serving from Master Parquet | {len(parquet_df)} rows for {commodity}")
+        return parquet_df, False
+
+    print(f"⚠️ Parquet also returned no data. Falling back to offline cache...")
 
     # --- SOURCE 3: Offline mini-fallback CSV ---
     fallback_file = "mini_fallback.csv"

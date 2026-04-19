@@ -1860,6 +1860,8 @@ with st.sidebar:
             "Truckers Strike",
             "Logistics / Delivery Delays",
             "Farmers Protest",
+            "Export Ban / Restriction",
+            "Import Allow / Free Trade",
             "Policy Change / Government Action",
         ],
         index=0,
@@ -2148,7 +2150,12 @@ if 'predict_btn' in locals() and predict_btn:
             synthetic_news_text = f"The {origin_market} market is experiencing {shock_event}."
             
         # 3. RUN SIMULATION
-        result = simulate_shock(synthetic_news_text, doc_text, commodity=forecast_commodity)
+        result = simulate_shock(
+            synthetic_news_text, 
+            doc_text, 
+            commodity=forecast_commodity,
+            explicit_origin=origin_market
+        )
         
         if result.get("resolution_error"):
             st.error(f"Node not found in historical data: {result['resolution_error']}")
@@ -2162,14 +2169,32 @@ if 'predict_btn' in locals() and predict_btn:
             st.json(result["features"])
         
         st.success("Simulation Complete")
+
+        # --- ORIGIN PRICE + DIRECTION TABLE ---
+        base_p = result.get('origin_base', result['origin_forecast'][0])
+        origin_dirs = result.get('origin_direction', ['—'] * 4)
+        st.markdown(f"#### 📍 Origin: **{result['origin_name']}** — Base Price: ₹{base_p:.0f}/q")
+        dir_cols = st.columns(4)
+        for i in range(4):
+            arrow = origin_dirs[i] if i < len(origin_dirs) else '—'
+            price = result['origin_forecast'][i] if i < len(result['origin_forecast']) else 0
+            color = "#2ecc71" if arrow == "↑" else "#e74c3c"
+            dir_cols[i].markdown(
+                f"<div style='text-align:center; padding:10px; border-radius:10px; "
+                f"border:1px solid {color}; background:rgba(0,0,0,0.3);'>"
+                f"<div style='font-size:0.8rem; color:#888;'>Day {i+1} ({dates[i+1]})</div>"
+                f"<div style='font-size:1.6rem; color:{color};'>{arrow}</div>"
+                f"<div style='font-size:1.1rem; font-weight:bold; color:white;'>₹{price:.0f}</div>"
+                f"</div>", unsafe_allow_html=True
+            )
+
+        st.markdown("")
         cols = st.columns(2)
         
         # --- CHART 1: ORIGIN IMPACT ---
         with cols[0]:
-            st.markdown(f"**Origin Impact:** {result['origin_name']}")
+            st.markdown(f"**Origin Price Trajectory:** {result['origin_name']}")
             
-            # Anchor to base_price (Day 0)
-            base_p = result.get('base_price', result['origin_forecast'][0])
             prices_origin = [base_p] + result['origin_forecast']
             
             df_origin = pd.DataFrame({
@@ -2178,7 +2203,6 @@ if 'predict_btn' in locals() and predict_btn:
                 "Type": ["Actual"] + ["Forecast"] * 4
             })
             
-            # Altair Chart with actual dates and dashed forecast line
             chart_origin = alt.Chart(df_origin).mark_line(point=True).encode(
                 x=alt.X("Date:N", sort=None, title="Timeline"),
                 y=alt.Y("Price:Q", scale=alt.Scale(zero=False), title="Price (₹/q)"),
@@ -2197,7 +2221,6 @@ if 'predict_btn' in locals() and predict_btn:
             if len(result['served_areas']) > 0:
                 frames = []
                 for served in result['served_areas']:
-                    # Neighbors also start from their own base_price
                     n_base = served.get('base_price', served['forecast'][0])
                     prices_served = [n_base] + served['forecast']
                     
@@ -2226,6 +2249,20 @@ if 'predict_btn' in locals() and predict_btn:
                 st.altair_chart(chart_ripple, use_container_width=True)
             else:
                 st.info("No highly correlated 'Served Areas' found for this origin.")
+
+        # --- RIPPLE DIRECTION TABLE ---
+        if len(result['served_areas']) > 0:
+            st.markdown("#### 🌊 Ripple Direction Summary")
+            ripple_data = []
+            for served in result['served_areas']:
+                row = {"Mandi": served['mandi'], "Base ₹": f"₹{served.get('base_price', 0):.0f}"}
+                s_dirs = served.get('direction', ['—'] * 4)
+                for d_idx in range(4):
+                    arrow = s_dirs[d_idx] if d_idx < len(s_dirs) else '—'
+                    price = served['forecast'][d_idx] if d_idx < len(served['forecast']) else 0
+                    row[f"Day {d_idx+1}"] = f"{arrow} ₹{price:.0f}"
+                ripple_data.append(row)
+            st.dataframe(pd.DataFrame(ripple_data), use_container_width=True, hide_index=True)
 
     st.markdown("---")
 
